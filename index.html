@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescript Pro - Sincronização Cloud</title>
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="stylesheet" href="styles.css?v=20261011_print_fix_v1">
+    <link rel="stylesheet" href="enterprise.css?v=20261013_floating_bar_fixed_v20">
+    <link rel="stylesheet" href="preview-zoom.css?v=20261011_print_fix_v1">
+    <link rel="stylesheet" href="settings-pro.css?v=20261013_floating_bar_fixed_v20">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==========================================================================
+           1. CONFIGURAÇÕES GERAIS E BLOQUEIOS
+           ========================================================================== */
+        body { background-color: #090B10; margin: 0; overflow: hidden; }
+        .hidden { display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+        #app-interface.hidden { display: none !important; }
+        .modal-overlay { display: none; } 
+
+        /* ==========================================================================
+           2. ESTILOS DO CAMPO DE DATA DA AGENDA E BOTÕES CANCELAR
+           ========================================================================== */
+        .modern-date-wrapper { position: relative; height: 40px; display: flex; align-items: center; background: #1E293B; border: 1px solid #334155; border-radius: 8px; cursor: pointer; overflow: hidden; transition: all 0.2s ease; flex-shrink: 0; }
+        .modern-date-wrapper:hover { background: #27354A; border-color: #38bdf8; }
+        .m-date-icon { width: 40px; height: 100%; display: flex; align-items: center; justify-content: center; background: #0F172A; border-right: 1px solid #334155; font-size: 1.1rem; color: #38bdf8; }
+        .m-date-input { flex: 1; min-width: 0; background: transparent !important; border: none !important; padding: 0 10px !important; margin: 0 !important; color: #F8FAFC !important; font-size: 0.95rem !important; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; outline: none !important; box-shadow: none !important; text-align: center; }
+        
+        .btn-cancel, button[onclick*="close"], button[onclick*="cancel"] {
+            background: #1E293B !important; color: #F8FAFC !important;
+            border: 1px solid #334155 !important; border-radius: 8px !important;
+            transition: all 0.2s ease !important; cursor: pointer !important;
+        }
+        .btn-cancel:hover, button[onclick*="close"]:hover, button[onclick*="cancel"]:hover { background: #27354A !important; border-color: #EF4444 !important; color: #EF4444 !important; }
+
+        /* ==========================================================================
+           3. CHAT SUPORTE IA (DESIGN AZUL CIANO)
+           ========================================================================== */
+        .chat-container { position: fixed; bottom: 25px; left: 560px; width: 380px; height: 550px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 16px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(56, 189, 248, 0.15); display: flex; flex-direction: column; overflow: hidden; z-index: 10000; opacity: 0; transform: translateY(40px) scale(0.95); pointer-events: none; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .chat-container.ativo { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .chat-header { background: linear-gradient(180deg, #020617 0%, rgba(2, 6, 23, 0.6) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #F8FAFC; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header-info { display: flex; flex-direction: column; }
+        .chat-titulo { font-family: 'Montserrat', sans-serif; font-size: 16px; font-weight: 800; margin: 0; color: #38bdf8; letter-spacing: 0.5px; }
+        .chat-status { font-size: 11px; color: #94A3B8; display: flex; align-items: center; gap: 6px; margin-top: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
+        .chat-status::before { content: ''; display: block; width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; }
+        .btn-fechar-chat { background: rgba(255,255,255,0.05); border: none; color: #94A3B8; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; padding: 0; align-self: flex-start; margin-top: -4px; }
+        .btn-fechar-chat:hover { background: rgba(239, 68, 68, 0.15); color: #EF4444; transform: rotate(90deg); }
+        .chat-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; font-family: 'Inter', sans-serif; }
+        .chat-body::-webkit-scrollbar { width: 6px; }
+        .chat-body::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        @keyframes messagePop { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .mensagem { max-width: 85%; padding: 14px 18px; font-size: 0.9rem; line-height: 1.5; word-wrap: break-word; animation: messagePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .bot-msg { background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%) !important; color: #F8FAFC !important; align-self: flex-start; border: 1px solid rgba(255,255,255,0.05); border-radius: 14px 14px 14px 2px; }
+        .user-msg { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important; color: #020617 !important; align-self: flex-end; font-weight: 700; border-radius: 14px 14px 2px 14px; }
+        .chat-footer { padding: 16px; background: rgba(2, 6, 23, 0.8); border-top: 1px solid rgba(255, 255, 255, 0.05); display: flex; gap: 10px; align-items: center; }
+        .chat-input { flex: 1; height: 48px; box-sizing: border-box; margin: 0; padding: 0 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; font-size: 0.9rem; color: #F8FAFC !important; background-color: rgba(15, 23, 42, 0.6) !important; outline: none; transition: all 0.3s ease; font-family: 'Inter', sans-serif; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+        .chat-input:focus { border-color: #38bdf8; background-color: rgba(15, 23, 42, 0.9) !important; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15), inset 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-enviar { background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: #020617; border: none; width: 48px; height: 48px; box-sizing: border-box; margin: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 4px 10px rgba(56, 189, 248, 0.3); }
+        .btn-enviar:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 8px 15px rgba(56, 189, 248, 0.4); }
+        .btn-enviar:active { transform: scale(0.95); }
+        .btn-enviar svg { transition: transform 0.3s ease; }
+        .btn-enviar:hover svg { transform: translate(3px, -3px); }
+        .typing-indicator { display: flex; gap: 5px; padding: 5px; align-items: center; justify-content: center;}
+        .typing-indicator span { width: 8px; height: 8px; background-color: #94A3B8; border-radius: 50%; animation: typingBounce 1.4s infinite ease-in-out both; }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 40% { transform: scale(1.2); opacity: 1; background-color: #38bdf8; box-shadow: 0 0 5px #38bdf8; } }
+
+        /* ==========================================================================
+           🌟 4. A SUA BARRA DE FERRAMENTAS ORIGINAL - ATUALIZADA (APPLE GLASS)
+           ========================================================================== */
+        .pro-sidebar {
+            width: 550px !important; 
+            min-width: 550px !important;
+            
+            /* Vidro Fosco Apple */
+            background: rgba(11, 17, 32, 0.65) !important; 
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 20px 0 50px rgba(0,0,0,0.3); /* Sombra pesada caindo na folha branca */
+            
+            padding-top: 0 !important;
+            
+            /* VOLTOU PARA 85PX PARA RESPEITAR SUA BARRA NATIVA */
+            padding-left: 85px !important; 
+            padding-right: 0 !important;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            height: 100vh;
+        }
+
+        .pro-form-container { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 30px 20px 180px 10px; }
+        .pro-form-container::-webkit-scrollbar { width: 5px; }
+        .pro-form-container::-webkit-scrollbar-track { background: transparent; }
+        .pro-form-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+        .pro-form-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        
+        /* 🔥 SECÇÕES COMO CARTÕES FLUTUANTES (APPLE GROUPED STYLE) */
+        .pro-section { 
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+            position: relative; 
+            overflow: visible !important; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .pro-section:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .pro-section-title { font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px; user-select: none; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        
+        /* 🔥 INPUTS PROFUNDOS (INSET GLASS) */
+        .pro-input { 
+            width: 100% !important; 
+            background-color: rgba(0, 0, 0, 0.25) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.05) !important; 
+            border-top: 1px solid rgba(0, 0, 0, 0.5) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important; 
+            color: #F8FAFC !important; 
+            font-family: 'Inter', sans-serif !important; 
+            font-size: 0.95rem !important; 
+            padding: 16px !important; 
+            box-sizing: border-box !important; 
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important; 
+            margin-bottom: 0 !important; 
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.4) !important; 
+        }
+        .pro-input::placeholder { color: #64748B !important; font-weight: 500; }
+        .pro-input:focus { 
+            background-color: rgba(15, 23, 42, 0.8) !important; 
+            border-color: #38bdf8 !important; border-top-color: #38bdf8 !important; border-bottom-color: #38bdf8 !important;
+            outline: none !important; 
+            box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2), inset 0 2px 4px rgba(0,0,0,0.2) !important; 
+        }
+        
+        .pro-input-title { font-size: 1.1rem !important; font-weight: 700 !important; text-transform: uppercase !important; }
+
+        /* 🎛️ CONTROLE SEGMENTADO ESTILO APPLE CUPERTINO */
+        .pro-segmented { display: flex; gap: 4px; margin-bottom: 16px; background: rgba(118, 118, 128, 0.16); padding: 3px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.06); box-shadow: none; }
+        .pro-segment-item { flex: 1; text-align: center; cursor: pointer; margin: 0; }
+        .pro-segment-item input { display: none; }
+        .pro-segment-label { position: relative; display: flex; align-items: center; justify-content: center; padding: 7px 10px; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", sans-serif; font-size: 12px; font-weight: 500; color: #8e8e93; background: transparent; border: none; border-radius: 7px; transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; z-index: 1; letter-spacing: -0.1px; }
+        .pro-segment-item:hover .pro-segment-label { color: #f5f5f7; background: rgba(255,255,255,0.05); }
+        .pro-segment-item input:checked + .pro-segment-label { background: #0071e3; border: none; color: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.25); transform: none; text-shadow: none; font-weight: 600; }
+
+        .pro-search-row { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; position: relative; }
+        .pro-search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.3rem; pointer-events: none; z-index: 5; margin-top: -2px; }
+        .pro-search-input { padding-left: 48px !important; } 
+        
+        /* BOTÕES DE ÍCONE (Lupa, Voz) */
+        .pro-icon-btn { width: 54px; height: 54px; flex-shrink: 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; color: #94A3B8; font-size: 1.3rem; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.05); overflow: visible !important; }
+        .pro-icon-btn:hover { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; background: rgba(56, 189, 248, 0.05); transform: translateY(-2px) !important; box-shadow: 0 8px 20px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255,255,255,0.1); }
+        .pro-icon-btn:active { transform: scale(0.94); box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+
+        #med-dropdown { position: absolute !important; top: calc(100% + 5px) !important; left: 0 !important; width: 100% !important; z-index: 999999 !important; background: rgba(15,23,42,0.95) !important; backdrop-filter: blur(20px); border: 1px solid #38bdf8 !important; border-radius: 12px !important; box-shadow: 0 20px 50px rgba(0,0,0,0.8) !important; }
+        .pro-grid { display: flex; gap: 15px; margin-bottom: 20px; }
+        .pro-col { flex: 1; display: flex; flex-direction: column; }
+        .pro-label { font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        
+        /* SPINNERS APPLE STYLE */
+        .custom-spin-wrapper { position: relative; display: block; width: 100%; }
+        .custom-spin-wrapper .pro-number-input { width: 100% !important; text-align: center !important; font-size: 1.2rem !important; font-weight: 700 !important; padding-right: 40px !important; }
+        .spin-btns { position: absolute; top: 1px; right: 1px; bottom: 1px; width: 40px; display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); border-radius: 0 11px 11px 0; overflow: hidden; z-index: 2; }
+        .spin-btns button { flex: 1 !important; width: 100% !important; height: 50% !important; border: none !important; background: transparent !important; color: #94A3B8 !important; font-size: 0.7rem !important; cursor: pointer !important; transition: all 0.2s ease !important; }
+        .spin-btns button.spin-up { border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
+        .spin-btns button:hover { background-color: rgba(56, 189, 248, 0.15) !important; color: #38bdf8 !important; }
+        .spin-btns button:active { background-color: rgba(56, 189, 248, 0.3) !important; }
+        
+        .pro-select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill="%2338bdf8" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); background-repeat: no-repeat; background-position: right 14px center; }
+
+        /* ==========================================================================
+           5. BOTÕES DE AÇÃO (APPLE BOUNCY STYLE)
+           ========================================================================== */
+        @keyframes sweepShine { 0% { left: -100%; } 100% { left: 100%; } }
+
+        .pro-btn { position: relative; overflow: hidden; font-family: 'Inter', sans-serif !important; font-weight: 700 !important; font-size: 0.95rem !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; border-radius: 14px !important; padding: 10px 20px !important; min-height: 56px !important; height: auto !important; cursor: pointer !important; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important; width: 100%; box-sizing: border-box; display: flex; justify-content: center; align-items: center; gap: 8px; white-space: normal !important; line-height: 1.2 !important; text-align: center !important; appearance: none !important; -webkit-appearance: none !important; border: 0 !important; outline: none !important; background-color: transparent !important; }
+        .pro-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transform: skewX(-20deg); transition: 0s; z-index: 1; pointer-events: none; }
+        .pro-btn:hover::before { animation: sweepShine 0.6s ease-out forwards; }
+        .pro-btn:active { transform: scale(0.94) translateY(2px) !important; box-shadow: inset 0 3px 6px rgba(0,0,0,0.4) !important; transition: all 0.1s ease !important; } /* SQUISH TÁTIL */
+
+        .pro-btn-outline { background: rgba(56, 189, 248, 0.05) !important; color: #38bdf8 !important; border: 1px solid rgba(56, 189, 248, 0.3) !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1) !important; }
+        .pro-btn-outline:hover { background: rgba(56, 189, 248, 0.15) !important; border: 1px solid #38bdf8 !important; box-shadow: 0 8px 25px rgba(56, 189, 248, 0.25), inset 0 1px 1px rgba(255,255,255,0.2) !important; transform: translateY(-3px) !important; }
+
+        #cancel-edit { background: rgba(255, 255, 255, 0.05) !important; color: #94A3B8 !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; z-index: 2; }
+        #cancel-edit:hover { color: #F8FAFC !important; background: rgba(239, 68, 68, 0.8) !important; border-color: #EF4444 !important; box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3), inset 0 1px 1px rgba(255,255,255,0.2) !important; transform: translateY(-3px) !important; }
+
+        .pro-btn-dark { background: linear-gradient(145deg, #1E293B, #0F172A) !important; color: #E2E8F0 !important; border: 1px solid rgba(56, 189, 248, 0.2) !important; font-size: 0.85rem !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 4px 10px rgba(0,0,0,0.3) !important; letter-spacing: 1px !important; }
+        .pro-btn-dark:hover { border-color: #38bdf8 !important; color: #38bdf8 !important; background: linear-gradient(145deg, #0F172A, #020617) !important; transform: translateY(-3px) !important; box-shadow: inset 0 1px 1px rgba(255,255,255,0.05), 0 8px 20px rgba(56, 189, 248, 0.2) !important; }
+
+        /* 💎 DOCK FLUTUANTE & BOTÃO IMPRIMIR ULTRA-PREMIUM */
+        .pro-dock { 
+            position: fixed !important; 
+            bottom: 0px !important; 
+            left: 85px !important; 
+            width: 445px !important; 
+            background: transparent !important; 
+            backdrop-filter: none !important; 
+            -webkit-backdrop-filter: none !important; 
+            padding: 0 !important; 
+            border: none !important; 
+            border-radius: 0 !important; 
+            z-index: 2147483640 !important; 
+            display: flex !important; 
+            flex-direction: column !important; 
+            gap: 0 !important; 
+            box-shadow: none !important; 
+            overflow: visible !important; 
+        }
+
+        @keyframes dsPulseGreen { 
+            0% { box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.45), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4); } 
+            50% { box-shadow: 0 12px 32px -2px rgba(16, 185, 129, 0.65), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45); } 
+            100% { box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.45), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4); } 
+        }
+
+        @keyframes emeraldSweep {
+            0% { transform: translateX(-160%) skewX(-20deg); }
+            35%, 100% { transform: translateX(260%) skewX(-20deg); }
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.8; }
+        }
+
+        @keyframes btnShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .sidebar { padding-bottom: 0 !important; }
+
+        #btn-print,
+        .pro-btn-solid,
+        .btn-print-enhanced {
+            position: relative !important;
+            width: 100% !important;
+            min-height: 84px !important;
+            height: 84px !important;
+            padding: 0 16px 10px 16px !important;
+            margin: 0 !important;
+            margin-bottom: 0px !important;
+            bottom: 0px !important;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+            border-bottom-left-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+            background: linear-gradient(135deg, #059669 0%, #10b981 42%, #047857 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.45), inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
+            color: #ffffff !important;
+            cursor: pointer !important;
+            overflow: hidden !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+            user-select: none !important;
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            animation: dsPulseGreen 3.5s ease-in-out infinite !important;
+        }
+
+        #btn-print:hover,
+        .pro-btn-solid:hover,
+        .btn-print-enhanced:hover {
+            transform: translateY(-2.5px) !important;
+            filter: brightness(1.07) !important;
+            box-shadow: 0 16px 36px -4px rgba(16, 185, 129, 0.7), 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.55) !important;
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+
+        #btn-print:active,
+        .pro-btn-solid:active,
+        .btn-print-enhanced:active {
+            transform: scale(0.975) translateY(1px) !important;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.35), inset 0 3px 6px rgba(0, 0, 0, 0.3) !important;
+            transition: all 0.08s ease !important;
+        }
+
+        .btn-shimmer-sweep {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 65%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: translateX(-160%) skewX(-20deg);
+            animation: emeraldSweep 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #btn-print:hover .btn-shimmer-sweep {
+            animation-duration: 2.2s;
+        }
+
+        .btn-print-inner {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .btn-print-main-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .btn-print-icon-box {
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
+            border-radius: 11px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: transform 0.25s ease;
+        }
+
+        #btn-print:hover .btn-print-icon-box {
+            transform: scale(1.08) rotate(-3deg);
+            background: rgba(255, 255, 255, 0.24);
+        }
+
+        .btn-print-svg {
+            width: 20px;
+            height: 20px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+        }
+
+        .btn-print-labels {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            min-width: 0;
+            text-align: left;
+        }
+
+        .btn-print-title {
+            font-family: 'Montserrat', 'Inter', sans-serif !important;
+            font-size: 13.5px !important;
+            font-weight: 800 !important;
+            letter-spacing: 0.7px !important;
+            text-transform: uppercase !important;
+            color: #ffffff !important;
+            line-height: 1.2 !important;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+            white-space: nowrap;
+        }
+
+        .btn-print-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+            margin-top: 2px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+            white-space: nowrap;
+        }
+
+        .badge-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .badge-dot.active {
+            background: #6ee7b7;
+            box-shadow: 0 0 8px #34d399, 0 0 14px rgba(52, 211, 153, 0.6);
+            animation: badgePulse 2s ease-in-out infinite;
+        }
+
+        .badge-dot.empty {
+            background: rgba(255, 255, 255, 0.45);
+            box-shadow: none;
+        }
+
+        .btn-shortcut-chip {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.26);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 4px 7px;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+            flex-shrink: 0;
+        }
+
+        .btn-shortcut-chip .kbd-key {
+            font-family: 'Inter', monospace !important;
+            font-size: 10.5px !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            letter-spacing: 0.5px !important;
+            line-height: 1 !important;
+        }
+
+        .btn-shortcut-chip .kbd-plus {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            color: rgba(255, 255, 255, 0.65) !important;
+            margin: 0 1px;
+            line-height: 1 !important;
+        }
+
+        #btn-print.btn-shake {
+            animation: btnShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+            border-color: rgba(239, 68, 68, 0.8) !important;
+        }
+
+        #btn-print.is-printing {
+            filter: brightness(0.95);
+            pointer-events: none;
+        }
+        #btn-print.is-printing .btn-print-icon-box {
+            animation: spinSlow 1s linear infinite;
+        }
+        @keyframes spinSlow {
+            100% { transform: rotate(360deg); }
+        }
+
+        .pro-btn-ai { background: rgba(30, 41, 59, 0.6) !important; color: #F8FAFC !important; border: 1px solid rgba(255,255,255,0.05) !important; font-size: 0.85rem !important; }
+        .pro-btn-ai:hover { border-color: #38bdf8 !important; color: #38bdf8 !important; background: rgba(15,23,42,0.9) !important; transform: translateY(-3px) !important; box-shadow: 0 8px 20px rgba(56, 189, 248, 0.15) !important; }
+        .pro-btn-ai svg { pointer-events: none; transition: 0.3s; }
+        .pro-btn-ai:hover svg { filter: drop-shadow(0 0 8px #38bdf8); }
+
+        .pro-text-btn { background: transparent; border: none; color: #EF4444; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; font-size: 0.85rem; padding: 5px 0; transition: 0.2s;}
+        .pro-text-btn:hover { text-decoration: underline; color: #FCA5A5; }
+
+        /* ==========================================================================
+           5.1 AÇÕES DA LISTA DE ITENS (GRID HARMONIOSO 50/50 - APPLE GLASS)
+           ========================================================================== */
+        .card-items-actions-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            margin-top: 15px !important;
+            margin-bottom: 8px !important;
+            padding: 4px 0 12px 0 !important;
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+
+        .card-action-btn {
+            height: 44px !important;
+            min-height: 44px !important;
+            padding: 0 10px !important;
+            border-radius: 10px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 0.78rem !important;
+            letter-spacing: 0.2px !important;
+            text-transform: uppercase !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            position: relative !important;
+            z-index: 2 !important;
+            overflow: visible !important;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease, filter 0.22s ease !important;
+            white-space: nowrap !important;
+        }
+
+        .card-action-btn.btn-copy {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.06) 100%) !important;
+            color: #38bdf8 !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
+        }
+        .card-action-btn.btn-copy:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.28) 0%, rgba(14, 165, 233, 0.2) 100%) !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.32) !important;
+            filter: brightness(1.06) !important;
+        }
+        .card-action-btn.btn-copy:active { transform: translateY(0) scale(0.97) !important; }
+        .card-action-btn.btn-copy.copied {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(16, 185, 129, 0.18) 100%) !important;
+            border-color: #22c55e !important;
+            color: #4ade80 !important;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.4) !important;
+        }
+
+        /* Estilo perfeitamente simétrico para o Excluir Lista */
+        button#clear-all,
+        button[onclick*="App.clearItems()"]#clear-all,
+        .card-action-btn.btn-clear {
+            background: transparent !important;
+            color: #ef4444 !important;
+            border: 1px dashed rgba(239, 68, 68, 0.4) !important;
+            box-shadow: none !important;
+        }
+        button#clear-all:hover,
+        .card-action-btn.btn-clear:hover {
+            background: rgba(239, 68, 68, 0.14) !important;
+            border-color: #ef4444 !important;
+            color: #fca5a5 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28) !important;
+            filter: brightness(1.06) !important;
+        }
+        button#clear-all:active,
+        .card-action-btn.btn-clear:active { transform: translateY(0) scale(0.97) !important; }
+
+        /* Botão flutuante na visualização da receita (CENTRALIZADO, LIVRE DA ABA DE AGENDAMENTOS) */
+        .preview-floating-bar {
+            position: sticky !important;
+            top: 15px !important;
+            margin-bottom: 20px !important;
+            z-index: 100 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 10px !important;
+            width: auto !important;
+            padding: 8px 16px !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+            transition: opacity 0.3s ease, transform 0.3s ease !important;
+        }
+        .preview-floating-bar.hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(-10px) !important;
+        }
+        .preview-action-pill {
+            background: rgba(15, 23, 42, 0.88) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+            color: #38bdf8 !important;
+            border-radius: 30px !important;
+            padding: 10px 24px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            cursor: pointer !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 15px rgba(56, 189, 248, 0.15) !important;
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease, filter 0.22s ease !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 2 !important;
+        }
+        .preview-action-pill:hover {
+            background: rgba(15, 23, 42, 0.98) !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.35) !important;
+            filter: brightness(1.08) !important;
+        }
+        .preview-action-pill:active { transform: translateY(0) scale(0.97) !important; }
+        .preview-action-pill.copied {
+            border-color: #22c55e !important;
+            color: #4ade80 !important;
+            background: rgba(20, 83, 45, 0.9) !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.5) !important;
+        }
+
+        #ui-items-list .btn-copy-row:hover {
+            background: rgba(56, 189, 248, 0.15) !important;
+            border-color: rgba(56, 189, 248, 0.35) !important;
+            color: #38bdf8 !important;
+            transform: translateY(-1px) scale(1.06) !important;
+        }
+        #ui-items-list .item-row {
+            overflow: visible !important;
+        }
+        #ui-items-list .row-actions {
+            overflow: visible !important;
+        }
+        @media print {
+            #preview-floating-actions, .preview-floating-bar, .card-items-actions-grid {
+                display: none !important;
+            }
+        }
+
+        /* ==========================================================================
+           5.2 PAINEL DE FORMA DE USO PRÓPRIA (APPLE GLASS)
+           ========================================================================== */
+        .custom-poso-panel {
+            background: rgba(15, 23, 42, 0.65) !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+            border-radius: 16px !important;
+            padding: 14px 16px !important;
+            margin-bottom: 20px !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+            animation: fadeInPoso 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+
+        @keyframes fadeInPoso {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-poso-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-bottom: 10px !important;
+        }
+
+        .custom-poso-title {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            color: #38bdf8 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .custom-poso-clear-btn {
+            background: transparent !important;
+            border: none !important;
+            color: #64748B !important;
+            font-size: 0.72rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            padding: 3px 8px !important;
+            border-radius: 6px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .custom-poso-clear-btn:hover {
+            color: #EF4444 !important;
+            background: rgba(239, 68, 68, 0.12) !important;
+        }
+
+        .custom-poso-textarea {
+            width: 100% !important;
+            min-height: 75px !important;
+            max-height: 140px !important;
+            resize: vertical !important;
+            padding: 12px 14px !important;
+            font-size: 0.9rem !important;
+            line-height: 1.45 !important;
+            border-radius: 10px !important;
+            margin-bottom: 10px !important;
+            font-family: 'Inter', sans-serif !important;
+            box-sizing: border-box !important;
+        }
+
+        .custom-poso-suggestion-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+            border: 1px solid rgba(56, 189, 248, 0.28) !important;
+            border-radius: 12px !important;
+            padding: 12px 14px !important;
+            margin-top: 10px !important;
+            cursor: pointer !important;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            position: relative !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .custom-poso-suggestion-card:hover {
+            border-color: rgba(56, 189, 248, 0.6) !important;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(14, 116, 144, 0.25) 100%) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .custom-poso-suggestion-card:active {
+            transform: scale(0.99) !important;
+        }
+
+        .custom-poso-suggestion-header {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            margin-bottom: 8px !important;
+        }
+
+        .custom-poso-suggestion-badge {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            color: #38bdf8 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.6px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+        }
+
+        .custom-poso-suggestion-action {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.68rem !important;
+            font-weight: 600 !important;
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.12) !important;
+            border: 1px solid rgba(56, 189, 248, 0.3) !important;
+            border-radius: 12px !important;
+            padding: 3px 9px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .custom-poso-suggestion-card:hover .custom-poso-suggestion-action {
+            background: #38bdf8 !important;
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4) !important;
+        }
+
+        .custom-poso-suggestion-text {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.84rem !important;
+            line-height: 1.45 !important;
+            color: #f1f5f9 !important;
+            background: rgba(15, 23, 42, 0.45) !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            border-left: 3px solid #38bdf8 !important;
+            word-break: break-word !important;
+        }
+
+        .custom-poso-switch-bar {
+            text-align: center !important;
+            margin: 0 0 16px 0 !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .custom-poso-switch-bar.hidden {
+            display: none !important;
+        }
+
+        .custom-poso-link {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.78rem !important;
+            color: #38bdf8 !important;
+            background: rgba(56, 189, 248, 0.08) !important;
+            border: 1px dashed rgba(56, 189, 248, 0.4) !important;
+            border-radius: 20px !important;
+            padding: 8px 18px !important;
+            text-decoration: none !important;
+            font-weight: 600 !important;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            cursor: pointer !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+        }
+
+        .custom-poso-link:hover {
+            background: rgba(56, 189, 248, 0.18) !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25) !important;
+        }
+
+        .custom-poso-link:active {
+            transform: scale(0.96) !important;
+        }
+
+        /* ==========================================================================
+           6. MÁGICA DO COLLAPSE (RETRAIR/EXPANDIR ABAS)
+           ========================================================================== */
+        .card-content { max-height: 800px; opacity: 1; overflow: hidden; transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out; margin-top: 15px;}
+        .collapsed .card-content { max-height: 0 !important; opacity: 0 !important; pointer-events: none; margin-top: 0; overflow: hidden !important;}
+        #card-items:not(.collapsed) .card-content {
+            overflow: visible !important;
+        }
+        .toggle-icon { display: inline-block; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(255,255,255,0.05); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;}
+        .collapsed .toggle-icon { transform: rotate(-90deg); background: transparent; }
+        
+        /* ==========================================================================
+           7. AGENDA SIDEBAR (DIREITA) EM VIDRO TAMBÉM
+           ========================================================================== */
+        #scheduling-sidebar {
+            background: rgba(11, 17, 32, 0.65) !important;
+            backdrop-filter: blur(40px) saturate(150%);
+            -webkit-backdrop-filter: blur(40px) saturate(150%);
+            border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+            box-shadow: -20px 0 50px rgba(0,0,0,0.3);
+        }
+        .add-med-box { background: rgba(255, 255, 255, 0.03) !important; border: 1px solid rgba(255, 255, 255, 0.06) !important; border-radius: 20px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.05) !important; }
+    </style>
+</head>
+<body class="theme-modern">
+
+<div id="toast-container"></div>
+
+<section id="login-screen" style="opacity: 0;">
+    <div class="login-container">
+        <div class="login-header-glass">
+            <div class="brand-icon-wrapper"><span class="login-brand-icon">⚕️</span></div>
+            <h2>Prescript Cloud</h2>
+            <p>Prontuário & Prescrição Inteligente</p>
+        </div>
+        <div id="google-login-section" class="login-actions-wrapper">
+            <button onclick="App.loginWithGoogle()" class="btn-google" id="btn-google-login">
+                <svg class="google-custom-logo" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Entrar com o Google</span>
+            </button>
+
+            <button onclick="App.openLocalProfiles()" class="btn-offline" id="btn-local-profiles">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                <span>Acesso Offline</span>
+            </button>
+
+            <button onclick="App.loginAnonymously()" class="btn-anonymous" id="btn-quick-login">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span>Acesso Rápido (Modo Temporário)</span>
+            </button>
+
+            <div class="keep-connected-wrapper">
+                <label class="custom-keep-label" for="keep-login-checkbox">
+                    <input type="checkbox" id="keep-login-checkbox" checked class="keep-input-hidden">
+                    <div class="keep-anim-box" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <span class="keep-text">Manter-me conectado</span>
+                </label>
+            </div>
+            <p class="cloud-security-text">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span>Seus dados protegidos na nuvem</span>
+            </p>
+        </div>
+        <div id="app-profiles-section" class="hidden" style="width: 100%; margin-top: 10px;">
+            <p style="color: #38bdf8; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;">👤 Selecione o profissional</p>
+            <div id="profile-list" class="profile-grid"></div>
+            <form id="new-profile-form" class="hidden" onsubmit="event.preventDefault(); App.saveProfileData();">
+                <div style="text-align: center; margin-bottom: 25px;"><div class="login-brand-icon" style="font-size: 2.5rem; margin-bottom: 5px; color: #38bdf8; filter: none; border: none; background: transparent;">👤</div><h2 id="form-profile-title" style="color: white; margin: 0; font-family: 'Inter', sans-serif; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px;">Criar Novo Perfil</h2><p style="color: #94a3b8; font-size: 0.9rem; margin-top: 5px; font-weight: 500;">Preencha os dados</p></div>
+                <label class="form-label">NOME COMPLETO *</label><input type="text" id="new-doc-name" placeholder="Ex: Dr. João" class="login-input custom-input" required>
+                <label class="form-label">CARGO / FUNÇÃO</label><select id="new-doc-role" class="login-input custom-input" required onchange="App.handleRoleChange()"><option value="medico">👨‍⚕️ Médico(a)</option><option value="assistente">📋 Assistente</option><option value="admin">⚙️ Administrador</option></select>
+                <div style="display: flex; gap: 15px;" id="docs-container"><div style="flex: 1;" id="crm-container"><label class="form-label">CRM *</label><input type="text" id="new-doc-crm" placeholder="Registro" class="login-input custom-input" required></div><div style="flex: 1;" id="cns-container"><label class="form-label">CNS</label><input type="text" id="new-doc-cns" placeholder="Cartão SUS" class="login-input custom-input"></div></div>
+                <div class="login-actions" style="display: flex; gap: 10px; margin-top: 20px;"><button type="button" class="btn-cancel" onclick="App.cancelProfileEdit()" style="flex: 1; padding: 12px; border-radius: 12px;">Cancelar</button><button type="submit" class="btn-save" id="btn-save-profile" style="flex: 1; padding: 12px; border-radius: 12px;">Salvar</button></div>
+            </form>
+            <div style="margin-top: 30px; display: flex; justify-content: center; gap: 10px;"><button onclick="App.logout()" class="btn-anonymous" style="width: auto; padding: 10px 20px; font-size: 0.85rem;">🚪 Sair da Conta Google</button></div>
+        </div>
+    </div>
+</section>
+
+<div id="loading-screen" class="hidden"><div class="loader"></div><div class="loading-text">Sincronizando ambiente...</div></div>
+
+<div class="modal-overlay" id="auth-modal" style="display: none;"><div class="modal-content small-modal"><div class="modal-title warning-text">🔒 Acesso Restrito</div><div class="modal-text">Esta ação requer autorização administrativa.</div><input type="password" id="auth-pass" placeholder="Senha Administrativa" class="login-input custom-input" style="text-align: center; margin-top: 15px;"><div id="auth-error" class="danger-text hidden font-small">Senha incorreta!</div><div class="modal-buttons center-buttons"><button class="btn-cancel" onclick="App.closeAuth()">Cancelar</button><button class="btn-save" onclick="App.confirmAuth()">Confirmar</button></div></div></div>
+
+<div class="modal-overlay" id="import-agenda-modal" style="display: none;"><div class="modal-content medium-modal"><div class="modal-title" style="color: var(--primary);">📥 Importar Lista de Pacientes</div><div class="modal-text text-left mb-10" style="font-size: 0.9em;">Cole o texto gerado pelo sistema de regulação.<br><span class="warning-text">Formato lido: ID - NOME DO PACIENTE - CNS</span></div><textarea id="import-agenda-text" rows="8" placeholder="Ex:\n135583 - MIRACI MIRES ARAUJO - 708003341399429\n122 - CAPS III / 1 - CONSULTA - Agendado" class="input-glass resize-v custom-input"></textarea><div class="modal-buttons"><button class="btn-cancel" onclick="App.closeImportModal()">Cancelar (Esc)</button><button class="btn-save" onclick="App.processAgendaImport()">Processar e Adicionar</button></div></div></div>
+
+<input type="file" id="profile-upload-input" accept="image/*" class="hidden" onchange="App.handleProfilePhotoChange(event)">
+<div id="profile-ctx-menu" class="ctx-menu" style="display: none;"><div class="ctx-item" onclick="App.triggerProfileUpload()">📷 Alterar Foto</div><div class="ctx-item" onclick="App.removeProfilePhotoFromCtx()">🖼️ Remover Foto</div><div class="ctx-item" onclick="App.editProfileFromCtx()">✏️ Editar Dados</div><div class="ctx-divider"></div><div class="ctx-item danger-text" onclick="App.deleteProfileFromCtx()">🗑️ Excluir Perfil</div></div>
+<div id="context-menu" class="ctx-menu" style="display: none;"><div class="ctx-item" onclick="App.ctxEdit()">✏️ Editar Item</div><div class="ctx-divider"></div><div class="ctx-item danger-text" onclick="App.ctxRemove()">🗑️ Remover Item</div></div>
+<div id="agenda-ctx-menu" class="ctx-menu" style="display: none;"><div class="ctx-item" onclick="App.agendaAttend()">📄 Atender Paciente</div><div class="ctx-item" id="ctx-history-option" onclick="App.agendaHistory()" style="color: var(--primary);">📜 Ver Histórico Clínico</div><div class="ctx-divider"></div><div class="ctx-item danger-text" onclick="App.agendaCancel()">❌ Cancelar Consulta</div></div>
+
+<main id="app-interface" class="hidden">
+    
+    <div class="modal-overlay" id="confirm-modal" style="display: none;"><div class="modal-content small-modal"><div class="modal-title danger-text">🗑️ Limpar tudo?</div><div class="modal-text">Isso apagará o nome do paciente e todos os medicamentos da lista.</div><div class="modal-buttons center-buttons"><button class="btn-cancel" onclick="App.closeConfirm()">Cancelar (Esc)</button><button class="btn-confirm btn-save" style="background: var(--danger); border: none;" onclick="App.confirmClear()">SIM, LIMPAR</button></div></div></div>
+    
+    <div class="modal-overlay" id="load-recipe-modal" style="display: none;"><div class="modal-content small-modal"><div class="modal-title" style="color: var(--primary);">📋 Histórico Encontrado</div><div class="modal-text" id="load-recipe-text" style="line-height: 1.5; font-size: 1.05em; margin-bottom: 25px;">Este paciente possui uma receita anterior. Deseja carregar as medicações?</div><div class="modal-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;"><button class="btn-cancel" onclick="App.handleLoadRecipe(false)" style="font-size: 0.8em; padding: 12px;">NÃO, ZERAR LISTA</button><button class="btn-save" onclick="App.handleLoadRecipe(true)" style="font-size: 0.8em; padding: 12px;">SIM, CARREGAR</button></div></div></div>
+
+    <div class="modal-overlay" id="timeline-modal" style="display: none;">
+        <div class="modal-content large-modal" style="width: 850px; max-width: 95vw; padding: 0; overflow: hidden; border-radius: 20px;">
+            <header class="lme-header-modern" style="padding: 25px 40px; border-bottom: 1px solid rgba(128,128,128,0.2);">
+                <div class="lme-icon">📜</div>
+                <div class="text-left">
+                    <div class="lme-title-text" style="font-size: 1.5em;">Prontuário Eletrônico (PEP)</div>
+                    <div class="lme-subtitle-text" id="timeline-patient-name" style="font-size: 1.1em; color: var(--primary); font-weight: 800; margin-top: 5px;">Nome do Paciente</div>
+                </div>
+                <button onclick="App.closeTimeline()" class="close-btn-modern" style="background: none; border:none; font-size:2em; color:#fff; cursor:pointer;">×</button>
+            </header>
+            <div style="display: flex; flex-direction: column; height: 68vh;">
+                <div class="pep-input-section" style="padding: 20px 40px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(128,128,128,0.2);">
+                    <textarea id="evolution-text" rows="3" placeholder="✍️ Nova evolução: registre sinais vitais, queixas, conduta clínica, etc..." class="input-glass resize-v custom-input" style="margin-bottom: 10px; font-size: 0.95em; padding: 15px; border-color: rgba(128,128,128,0.3); border-radius: 12px;"></textarea>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn-save" onclick="App.addEvolution()" style="padding: 10px 25px; font-size: 0.9em; border-radius: 10px; font-weight: 800; letter-spacing: 0.5px;">+ ADICIONAR EVOLUÇÃO</button>
+                    </div>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 40px; background: rgba(0,0,0,0.05);">
+                    <div id="timeline-container" class="pep-timeline"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="lme-modal" style="display: none; z-index: 9999999; background: rgba(2, 6, 23, 0.9);">
+        <style>
+            .lme-premium-card { background: #0F172A; border: 1px solid #38bdf8; border-radius: 16px; max-width: 850px; width: 95%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+            .lme-header-gold { background: #020617; border-bottom: 1px solid #334155; padding: 25px 35px; display: flex; justify-content: space-between; align-items: center; position: relative; }
+            .lme-step-box { background: #020617; border: 1px solid #1E293B; border-radius: 8px; padding: 25px; margin-bottom: 20px; }
+            .lme-step-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #1E293B; padding-bottom: 10px; }
+            .lme-step-badge { background: #38bdf8; color: #020617; width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9em; }
+            .lme-step-text { color: #38bdf8; font-size: 1.1em; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+            .lme-input-label { font-size: 0.75em; color: #94A3B8; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+            .lme-glass-input { background: #1E293B !important; border: 1px solid #334155 !important; color: #F8FAFC !important; border-radius: 6px !important; padding: 14px 15px !important; width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.95em; }
+            .lme-glass-input:focus { border-color: #38bdf8 !important; outline: none; }
+            .lme-add-btn { background: transparent; color: #38bdf8; border: 1px solid #38bdf8; padding: 0 25px; height: 48px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; white-space: nowrap; font-family: 'Montserrat', sans-serif; }
+            .lme-add-btn:hover { background: rgba(56, 189, 248, 0.1); }
+            .lme-generate-btn { background: #38bdf8; color: #020617; border: none; padding: 18px; border-radius: 8px; font-size: 1.1em; font-weight: 800; letter-spacing: 1px; cursor: pointer; transition: 0.2s; text-transform: uppercase; width: 100%; font-family: 'Montserrat', sans-serif; }
+            .lme-generate-btn:hover { background: #7dd3fc; transform: translateY(-2px); }
+        </style>
+        <div class="lme-premium-card">
+            <header class="lme-header-gold">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="font-size: 2.5em;">💎</div>
+                    <div class="text-left">
+                        <div style="color: #38bdf8; font-size: 1.5em; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-family: 'Montserrat', sans-serif;">Alto Custo & LME</div>
+                        <div style="font-size: 0.9em; color: #94A3B8; font-weight: 500;">Geração de formulários e receitas de 6 meses.</div>
+                    </div>
+                </div>
+                <button onclick="App.closeLMEModal()" style="background: none; border:none; font-size:2.5em; color: #94a3b8; cursor:pointer;">×</button>
+            </header>
+            <div style="padding: 25px 35px; overflow-y: auto; max-height: 65vh; display: flex; flex-direction: column;">
+                <div class="lme-step-box">
+                    <div class="lme-step-title"><span class="lme-step-badge">1</span><span class="lme-step-text">Dados do Paciente</span></div>
+                    <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:15px;">
+                        <div><label class="lme-input-label">Nome Completo</label><input type="text" id="lme-p-name" class="lme-glass-input" placeholder="Nome do Paciente"></div>
+                        <div><label class="lme-input-label">CNS (Cartão SUS)</label><input type="text" id="lme-p-cns" class="lme-glass-input" placeholder="000 0000 0000 0000"></div>
+                        <div><label class="lme-input-label">Telefone</label><input type="text" id="lme-tel" class="lme-glass-input" placeholder="(00) 00000-0000"></div>
+                    </div>
+                </div>
+                <div class="lme-step-box">
+                    <div class="lme-step-title"><span class="lme-step-badge">2</span><span class="lme-step-text">Posologia de Alto Custo</span></div>
+                    <div id="lme-manual-controls" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; background: #0F172A; padding: 15px; border-radius: 8px;">
+                        <div style="flex: 2;"><label class="lme-input-label">Selecione a Medicação</label><select id="lme-med-select" class="lme-glass-input"></select></div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="width: 70px;"><label class="lme-input-label" style="text-align: center;">Manhã</label><input type="number" id="lme-dose-m" value="0" min="0" step="0.25" class="lme-glass-input" style="text-align: center; padding: 14px 5px !important;"></div>
+                            <div style="width: 70px;"><label class="lme-input-label" style="text-align: center;">Tarde</label><input type="number" id="lme-dose-t" value="0" min="0" step="0.25" class="lme-glass-input" style="text-align: center; padding: 14px 5px !important;"></div>
+                            <div style="width: 70px;"><label class="lme-input-label" style="text-align: center;">Noite</label><input type="number" id="lme-dose-n" value="0" min="0" step="0.25" class="lme-glass-input" style="text-align: center; padding: 14px 5px !important;"></div>
+                        </div>
+                        <button onclick="App.addLmeItem()" class="lme-add-btn">+ INCLUIR</button>
+                    </div>
+                    <div id="lme-added-meds" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+                <div class="lme-step-box" style="margin-bottom: 0;">
+                    <div class="lme-step-title"><span class="lme-step-badge">3</span><span class="lme-step-text">Diagnóstico e Justificativa</span></div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        <div><label class="lme-input-label" style="color: #38bdf8;">SELECIONE O CID (Obrigatório):</label><select id="lme-cid-select" onchange="App.fillAnamnese()" class="lme-glass-input"><option value="">Selecione o CID...</option></select></div>
+                        <div><label class="lme-input-label">Anamnese / Justificativa Clínica (Editável)</label><textarea id="lme-anamnese" rows="3" placeholder="Aguardando seleção do CID e Medicações..." class="lme-glass-input" style="resize: vertical; line-height: 1.5;"></textarea></div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding: 25px 35px; background: #020617; border-top: 1px solid #334155; text-align: center;">
+                <button class="lme-generate-btn" onclick="App.generateLMEPreview()">🖨️ ADICIONAR LME AO VISUALIZADOR</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settings-modal" style="display: none;">
+        <div class="settings-remastered">
+            <aside class="settings-sidebar">
+                <div class="settings-header">
+                    <span class="s-icon">⚙️</span>
+                    <h2>Ajustes</h2>
+                </div>
+                <nav class="settings-menu">
+                    <button class="settings-tab-btn active" onclick="App.switchSettingsTab('tab-unidade')"><span style="font-size:1.2em;">🏥</span> Dados da Unidade</button>
+                    <button class="settings-tab-btn" onclick="App.switchSettingsTab('tab-visual')"><span style="font-size:1.2em;">🎨</span> Tema e Impressão</button>
+                    <button class="settings-tab-btn" onclick="App.switchSettingsTab('tab-atalhos')"><span style="font-size:1.2em;">⌨️</span> Teclas de Atalho</button>
+                    <button class="settings-tab-btn" onclick="App.switchSettingsTab('tab-novos')"><span style="font-size:1.2em;">💊</span> Personalizados</button>
+                    <button class="settings-tab-btn" onclick="App.switchSettingsTab('tab-favoritos')"><span style="font-size:1.2em;">⭐</span> Meus Favoritos</button>
+                </nav>
+            </aside>
+
+            <main class="settings-main-area">
+                <div class="settings-content-scroll">
+                    
+                    <div id="tab-unidade" class="settings-tab-content">
+                        <h3 class="s-tab-title">Identificação do Serviço</h3>
+                        <div class="s-group">
+                            <label>Nome da Instituição (Título Principal)</label><input type="text" id="conf-title" class="custom-input" placeholder="Ex: CAPS III Dr. João...">
+                            <div class="s-grid-2">
+                                <div><label>Subtítulo / Secretaria</label><input type="text" id="conf-sub" class="custom-input" placeholder="Ex: Secretaria Municipal de Saúde"></div>
+                                <div><label>Código CNES</label><input type="text" id="conf-cnes" class="custom-input" placeholder="0000000"></div>
+                            </div>
+                            <label>Endereço e Contato</label><textarea id="conf-addr" rows="2" class="custom-input" placeholder="Rua, Número, Telefone..."></textarea>
+                            <label>Cidade / Estado (Para a Data)</label><input type="text" id="conf-city" class="custom-input" placeholder="Ex: Feira de Santana">
+                            <div style="margin-top: 25px; padding: 20px; background: rgba(0,0,0,0.2); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 12px; text-align: center;">
+                                <label class="form-label" style="color: #38bdf8; font-size: 0.9em; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 5px;">✍️ Assinatura Digital</label>
+                                <img id="preview-signature" src="" style="max-width: 100%; max-height: 100px; object-fit: contain; margin-bottom: 15px; display: none; mix-blend-mode: multiply; background: white; padding: 10px; border-radius: 8px; margin-left: auto; margin-right: auto;">
+                                <div>
+                                    <input type="file" id="signature-upload-input" accept="image/*" style="display: none;" onchange="App.handleSignatureUpload(event)">
+                                    <button type="button" class="btn-secondary" onclick="document.getElementById('signature-upload-input').click()" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid #38bdf8; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;">📸 Anexar Foto da Assinatura</button>
+                                    <button type="button" id="btn-remove-sig" onclick="App.removeSignature()" style="display: none; background: transparent; color: #ef4444; border: none; padding: 10px; cursor: pointer; text-decoration: underline; margin-left: 10px;">Remover</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-visual" class="settings-tab-content" style="display: none;">
+                        <h3 class="s-tab-title">Opções de Impressão</h3>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; color: white; font-weight: bold;">
+        <input type="checkbox" id="conf-only-first-date" style="width: 20px; height: 20px;">
+        Deixar data em branco a partir da 2ª Via
+    </label>
+</div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; color: #f4f4f5; font-family: 'Inter', sans-serif;">
+                                <input type="checkbox" id="config-smart-date" style="width: 20px; height: 20px; cursor: pointer; accent-color: #38bdf8;">
+                                <span>Deixar a data em branco a partir da 2ª via <br><small style="color: #94A3B8; font-weight: 400;">Ex: Feira de Santana, _____/_____/______</small></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; color: #f4f4f5; font-family: 'Inter', sans-serif;">
+                                <input type="checkbox" id="config-unlock-default" style="width: 20px; height: 20px; cursor: pointer; accent-color: #38bdf8;">
+                                <span>Iniciar Pré-visualizador Destravado <br><small style="color: #94A3B8; font-weight: 400;">O cadeado da visualização da receita iniciará destravado por padrão</small></span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px;">
+                            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 600; color: #f4f4f5; font-family: 'Inter', sans-serif;">
+                                <input type="checkbox" id="conf-copy-header-enable" style="width: 20px; height: 20px; cursor: pointer; accent-color: #38bdf8;" onchange="App.toggleCopyHeaderFields(this.checked)">
+                                <span>📋 Cópia para Prontuário Eletrônico (PEP) <br><small style="color: #94A3B8; font-weight: 400;">Incluir texto inicial ao copiar a prescrição (Ex: Paciente solicita renovação de receituário.)</small></span>
+                            </label>
+                            <div id="conf-copy-header-container" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
+                                <label style="font-size: 0.85em; color: #bae6fd; font-weight: 600;">Texto Inicial / Cabeçalho da Cópia:</label>
+                                <textarea id="conf-copy-header-text" class="custom-input" rows="2" placeholder="Ex: Paciente solicita renovação de receituário." style="resize: vertical; font-size: 0.9em; background: rgba(0,0,0,0.3); border-color: rgba(56,189,248,0.3); color: white;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <footer class="settings-actions-footer">
+                    <button class="btn-cancel" style="padding: 12px 25px; margin:0; width:auto;" onclick="App.closeSettings()">Sair sem Salvar</button>
+                    <button class="btn-save" style="padding: 12px 25px; margin:0; width:auto;" onclick="App.saveSettings()">💾 Salvar Modificações</button>
+                </footer>
+            </main>
+            <input type="hidden" id="conf-docname"><input type="hidden" id="conf-doccns">
+        </div>
+    </div>
+
+    <!-- 📊 CENTRO DE INTELIGÊNCIA EPIDEMIOLÓGICA & ESTATÍSTICAS DE DISPENSAÇÃO -->
+    <div class="modal-overlay stats-pro-overlay" id="stats-modal" style="display: none;">
+        <div class="stats-pro-container" id="stats-pro-container">
+            <!-- HEADER EXECUTIVO -->
+            <header class="stats-pro-header">
+                <div class="stats-header-info">
+                    <div class="stats-icon-badge">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="stats-title-row">
+                            <h2 class="stats-title">Inteligência Clínica & Dispensação</h2>
+                            <span class="stats-version-pill">Estatística Epidemiológica Pro</span>
+                        </div>
+                        <p class="stats-subtitle">Incidência diagnóstica, prevalência de condições clínicas e fluxo de dispensação farmacológica</p>
+                    </div>
+                </div>
+                <div class="stats-header-actions">
+                    <button type="button" class="stats-btn-export" onclick="App.printStatsReport()" title="Imprimir ou Salvar Relatório Clínico Oficial em PDF">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        <span>Emitir Relatório (PDF)</span>
+                    </button>
+                    <button type="button" class="stats-btn-close" onclick="App.closeStats()" title="Fechar painel (Esc)">✕</button>
+                </div>
+            </header>
+
+            <!-- BARRA DE CONTROLE & FILTROS -->
+            <div class="stats-controls-bar">
+                <!-- Seletor de Período -->
+                <div class="stats-period-group">
+                    <span class="stats-control-label">PERÍODO:</span>
+                    <div class="stats-period-chips">
+                        <button type="button" class="stats-chip active" id="chip-period-month" onclick="App.setStatsPeriod('month')">Mês Selecionado</button>
+                        <button type="button" class="stats-chip" id="chip-period-quarter" onclick="App.setStatsPeriod('quarter')">Últimos 3 Meses</button>
+                        <button type="button" class="stats-chip" id="chip-period-year" onclick="App.setStatsPeriod('year')">Ano Atual</button>
+                        <button type="button" class="stats-chip" id="chip-period-all" onclick="App.setStatsPeriod('all')">Geral (Todo Histórico)</button>
+                    </div>
+                    <div class="stats-month-input-wrapper" id="stats-month-input-wrapper">
+                        <span class="stats-calendar-icon">📅</span>
+                        <input type="month" id="stats-date" onchange="App.handleStatsDateChange()" class="stats-month-picker" title="Escolha o mês de referência">
+                    </div>
+                </div>
+
+                <!-- Abas de Navegação -->
+                <div class="stats-tabs-group">
+                    <button type="button" class="stats-tab-btn active" id="tab-btn-incidence" onclick="App.switchStatsTab('incidence')">
+                        <span>🧠 Incidência Clínica</span>
+                    </button>
+                    <button type="button" class="stats-tab-btn" id="tab-btn-ranking" onclick="App.switchStatsTab('ranking')">
+                        <span>💊 Ranking & Farmácia</span>
+                    </button>
+                    <button type="button" class="stats-tab-btn" id="tab-btn-comorbidities" onclick="App.switchStatsTab('comorbidities')">
+                        <span>👥 Comorbidades</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CORPO ROLÁVEL COM RESULTADOS -->
+            <div class="stats-body-scroll" id="stats-results">
+                <!-- Preenchido dinamicamente por App.calculateStats() -->
+            </div>
+            
+            <footer class="stats-pro-footer">
+                <div class="stats-footer-note">
+                    <span>💡 Base de dados: Registros locais sincronizados e validados com os prontuários da unidade.</span>
+                </div>
+                <div class="stats-footer-actions">
+                    <button type="button" class="stats-btn-secondary" onclick="App.closeStats()">Fechar Janela</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 🖨️ CENTRAL DE IMPRESSÃO & EXPORTAÇÃO (APPLE MINIMALIST DESIGN) -->
+    <div class="modal-overlay" id="print-hub-modal" style="display: none;">
+        <div class="print-hub-container ph-horizontal-mode">
+            <!-- TOPO / CABEÇALHO TOOLBAR UNIFICADO NÍVEL APPLE -->
+            <header class="ph-header">
+                <div class="ph-header-left">
+                    <div class="ph-badge-icon" title="Impressão & Exportação">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v8H6z"></path></svg>
+                    </div>
+                    <div class="ph-title-group">
+                        <div class="ph-title">Central de Impressão & Exportação</div>
+                        <div class="ph-subtitle" id="ph-patient-meta">Navegue pelas folhas e ajuste quais deseja emitir</div>
+                    </div>
+                </div>
+
+                <!-- APPLE SEGMENTED CONTROL COMPACTO -->
+                <div class="ph-format-bar">
+                    <div class="ph-format-options" role="tablist">
+                        <label class="ph-format-card is-active" data-format="print" onclick="App.setPrintHubFormat('print')">
+                            <input type="radio" name="ph-format-opt" value="print" checked>
+                            <span class="ph-fc-icon">🖨️</span>
+                            <div class="ph-fc-content">
+                                <span class="ph-fc-title">Impressão / PDF</span>
+                            </div>
+                        </label>
+                        <label class="ph-format-card" data-format="html" onclick="App.setPrintHubFormat('html')">
+                            <input type="radio" name="ph-format-opt" value="html">
+                            <span class="ph-fc-icon">📄</span>
+                            <div class="ph-fc-content">
+                                <span class="ph-fc-title">Web (HTML)</span>
+                            </div>
+                        </label>
+                        <label class="ph-format-card" data-format="docx" onclick="App.setPrintHubFormat('docx')">
+                            <input type="radio" name="ph-format-opt" value="docx">
+                            <span class="ph-fc-icon">📝</span>
+                            <div class="ph-fc-content">
+                                <span class="ph-fc-title">Word (.docx)</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="ph-header-right">
+                    <div class="ph-selection-summary">
+                        <span class="ph-count-pill" id="ph-selected-count">0 selecionadas</span>
+                    </div>
+                    <div class="ph-quick-toggles">
+                        <button type="button" class="ph-btn-chip ph-chip-select-all" onclick="App.selectAllPrintHubPages(true)">Todas</button>
+                        <button type="button" class="ph-btn-chip ph-chip-deselect-all" onclick="App.selectAllPrintHubPages(false)">Nenhuma</button>
+                    </div>
+                    <button type="button" class="ph-close-btn" onclick="App.closePrintHub()" title="Fechar (Esc)">✕</button>
+                </div>
+            </header>
+
+            <!-- ÁREA HORIZONTAL CENTRAL COM CARROSSEL E NAVEGAÇÃO -->
+            <div class="ph-stage-wrapper">
+                <!-- Seta Esquerda -->
+                <button type="button" class="ph-nav-arrow ph-arrow-prev" id="ph-btn-prev" onclick="App.prevPrintHubPage()" title="Folha Anterior (←)">
+                    <span class="ph-nav-icon">❮</span>
+                </button>
+
+                <!-- Pista Horizontal (Track) -->
+                <div class="ph-horizontal-track" id="ph-horizontal-track">
+                    <!-- Slides das folhas geradas dinamicamente -->
+                </div>
+
+                <!-- Seta Direita -->
+                <button type="button" class="ph-nav-arrow ph-arrow-next" id="ph-btn-next" onclick="App.nextPrintHubPage()" title="Próxima Folha (→)">
+                    <span class="ph-nav-icon">❯</span>
+                </button>
+            </div>
+
+            <!-- BARRA DE MINIATURAS E NAVEGAÇÃO INFERIOR (FILMSTRIP DOCK) -->
+            <div class="ph-filmstrip-bar" id="ph-filmstrip-bar">
+                <div class="ph-filmstrip-inner" id="ph-filmstrip-track">
+                    <!-- Miniaturas das folhas -->
+                </div>
+                <div class="ph-stage-counter" id="ph-stage-counter">
+                    Folha 1 de 1
+                </div>
+            </div>
+
+            <!-- RODAPÉ DE AÇÕES & ATALHOS -->
+            <footer class="ph-footer">
+                <div class="ph-footer-left">
+                    <div class="ph-shortcuts-ribbon">
+                        <span class="ph-sc-pill" title="Navegar entre folhas"><kbd>←</kbd> <kbd>→</kbd> Navegar</span>
+                        <span class="ph-sc-pill" title="Marcar ou desmarcar folha"><kbd>Espaço</kbd> Marcar</span>
+                        <span class="ph-sc-pill" title="Selecionar todas as folhas"><kbd>T</kbd> Todas</span>
+                        <span class="ph-sc-pill" title="Desmarcar todas"><kbd>N</kbd> Nenhuma</span>
+                        <span class="ph-sc-pill" title="Emitir documento"><kbd>Enter</kbd> Emitir</span>
+                        <span class="ph-sc-pill" title="Fechar (Esc)"><kbd>Esc</kbd> Fechar</span>
+                    </div>
+                </div>
+                <div class="ph-footer-right">
+                    <button type="button" class="ph-btn-cancel" onclick="App.closePrintHub()">Voltar à Edição</button>
+                    <button type="button" class="ph-btn-action" id="ph-main-action-btn" onclick="App.executePrintHubAction()">
+                        <span class="ph-btn-action-icon">🖨️</span>
+                        <span class="ph-btn-action-text" id="ph-action-label">Imprimir Selecionadas (0)</span>
+                    </button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- 🧠 MODAL DE LEITURA INTELIGENTE DE RECEITAS (OCR IA) -->
+    <div class="modal-overlay" id="ocr-scan-modal" style="display: none;">
+        <div class="modal-content glass-panel ocr-modal-container">
+            <header class="ocr-modal-header">
+                <div class="ocr-header-title">
+                    <div class="ocr-badge-icon">📸</div>
+                    <div>
+                        <h3>Leitura Inteligente de Receita</h3>
+                        <p>Extração automática de posologia e medicamentos via IA</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close-ocr" onclick="OcrScanner.closeModal()" title="Fechar (Esc)">&times;</button>
+            </header>
+
+            <div class="ocr-modal-body">
+                <div class="drag-scan-area" id="ocr-dropzone">
+                    <input type="file" id="ocr-file-input" accept="image/*" class="ocr-file-hidden" onchange="OcrScanner.handleFileSelect(event)">
+                    <div class="drag-drop-content">
+                        <div class="ocr-scan-radar">
+                            <span class="radar-beam"></span>
+                            <div class="ocr-cloud-icon">📄</div>
+                        </div>
+                        <h4>Arraste e solte a imagem da receita aqui</h4>
+                        <p>Formatos suportados: PNG, JPG ou JPEG (Foto de celular ou scanner)</p>
+                        <button type="button" class="ocr-select-btn" onclick="document.getElementById('ocr-file-input').click()">
+                            📁 Ou selecione do seu computador
+                        </button>
+                    </div>
+                </div>
+
+                <div class="ocr-processing-area hidden" id="ocr-processing-view">
+                    <div class="scanner-preview-wrapper">
+                        <img id="ocr-preview-thumbnail" src="" alt="Receita em análise">
+                        <div class="scanner-laser-line"></div>
+                    </div>
+                    <div class="ocr-status-box">
+                        <div class="ocr-spinner-neon"></div>
+                        <div class="ocr-status-texts">
+                            <span class="ocr-status-main">A IA está a analisar a posologia e as dosagens...</span>
+                            <span class="ocr-status-sub">Identificando fármacos, miligramas e horários de administração</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="ocr-modal-footer">
+                <span class="ocr-footer-hint">💡 Dica: Receitas nítidas e bem iluminadas garantem 100% de precisão</span>
+                <button type="button" class="btn-cancel" onclick="OcrScanner.closeModal()">Cancelar</button>
+            </footer>
+        </div>
+    </div>
+
+    <aside id="prontuario-drawer">
+        <header class="drawer-header" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; flex-shrink: 0 !important;">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5em; filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));">📂</span>
+                    <div>
+                        <h2 style="color: var(--text-main, #f8fafc); font-size: 1.22em; font-weight: 800; margin: 0; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px;">
+                            Histórico de Prescrições
+                            <span id="history-total-count" class="hg-header-counter">0 pacientes</span>
+                        </h2>
+                        <div style="font-size: 0.78em; color: var(--text-muted, #94a3b8); margin-top: 2px;">Prontuário Digital (PEP) • Monitoramento de Renovações</div>
+                    </div>
+                </div>
+                <button onclick="App.toggleDrawer()" class="close-drawer-btn" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;" title="Fechar (Esc)">&times;</button>
+            </div>
+        </header>
+
+        <div class="drawer-actions" style="margin-top: 14px; display: flex; gap: 8px; flex-shrink: 0 !important;">
+            <button onclick="App.exportBackup()" class="btn-secondary hg-top-btn" title="Exportar banco de pacientes e receitas em formato JSON">
+                <span>💾</span> Exportar Banco
+            </button>
+            <button onclick="document.getElementById('import-input').click()" class="btn-secondary hg-top-btn" title="Restaurar ou importar backup de receitas">
+                <span>📥</span> Importar Banco
+            </button>
+        </div>
+        <input type="file" id="import-input" class="hidden" accept=".json" onchange="App.importBackup(event)">
+
+        <div class="search-box-modern" style="position: relative; margin-top: 14px; margin-bottom: 8px; flex-shrink: 0 !important;">
+            <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.15em; color: var(--primary, #38bdf8); pointer-events: none;">🔍</span>
+            <input type="text" id="history-search" placeholder="Buscar por paciente ou medicamento (ex: Clonazepam)..." class="custom-input" style="padding-left: 42px; padding-right: 36px; height: 46px; border-radius: 12px; font-size: 0.95em; background: rgba(0,0,0,0.3) !important;" autocomplete="off" oninput="App.renderHistory()">
+            <button id="history-search-clear" onclick="App.clearHistorySearch()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2em; display: none; padding: 4px; line-height: 1;" title="Limpar busca">&times;</button>
+        </div>
+
+        <div class="hg-filter-chips" id="history-filter-chips" style="flex-shrink: 0 !important;">
+            <button class="hg-chip active" id="chip-filter-all" onclick="App.setHistoryFilter('all')" title="Ver todos os pacientes">
+                <span>📋</span> Todos <span class="chip-count" id="chip-count-all">0</span>
+            </button>
+            <button class="hg-chip chip-alert" id="chip-filter-recent" onclick="App.setHistoryFilter('recent')" title="Pacientes com receitas emitidas há menos de 30 dias (Tratamento Vigente)">
+                <span class="chip-dot-pulse"></span>
+                <span>⚠️</span> Vigente (&lt; 30d) <span class="chip-count" id="chip-count-recent">0</span>
+            </button>
+            <button class="hg-chip chip-ok" id="chip-filter-ontime" onclick="App.setHistoryFilter('ontime')" title="Pacientes aptos para nova renovação (30 dias ou mais)">
+                <span>✅</span> No Prazo (≥ 30d) <span class="chip-count" id="chip-count-ontime">0</span>
+            </button>
+        </div>
+
+        <div id="history-list" class="history-list-container" style="flex: 1 1 auto !important; min-height: 0 !important; max-height: none !important; height: auto !important; overflow-y: auto !important; overflow-x: hidden !important; display: flex !important; flex-direction: column !important; gap: 12px !important; padding-right: 6px !important;"></div>
+    </aside>
+
+    <aside class="sidebar pro-sidebar">
+        
+        <div class="form-container pro-form-container">
+            
+            <div class="pro-section pro-section-patient" id="section-patient-id">
+                <div class="pro-section-title pro-patient-title-row">
+                    <span class="pro-title-main">👤 Identificação</span>
+                    <div id="patient-live-badge-slot" class="patient-live-badge-slot"></div>
+                </div>
+                <div class="pro-patient-input-container" id="pro-patient-input-wrapper">
+                    <input type="text" id="patient-name" placeholder="NOME DO PACIENTE" autofocus autocomplete="off" class="custom-input pro-input pro-input-title" style="text-align: center;" oninput="App.updatePatientLiveBadge(this.value)">
+                    <button type="button" id="patient-name-clear-btn" class="patient-clear-btn hidden" onclick="App.clearPatientName()" title="Limpar nome do paciente" aria-label="Limpar nome">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div id="suggestions-box"></div>
+                </div>
+            </div>
+
+            <div class="pro-section" id="section-prescription-main">
+                <div class="pro-section-title">
+                    <span>Prescrição Médica</span>
+                </div>
+                
+                <div class="pro-segmented">
+                    <label class="pro-segment-item" title="Modo Lote: Digite ou cole múltiplas receitas em texto livre">
+                        <input type="checkbox" id="mode-fast">
+                        <span class="pro-segment-label">Lote</span>
+                    </label>
+                    <label class="pro-segment-item" title="Frações: Permite doses fracionadas de 0.25 e 0.5 comprimidos">
+                        <input type="checkbox" id="mode-fraction">
+                        <span class="pro-segment-label">Frações</span>
+                    </label>
+                    <label class="pro-segment-item" title="Data: Imprimir data atual nas receitas">
+                        <input type="checkbox" id="check-date">
+                        <span class="pro-segment-label">Data</span>
+                    </label>
+                </div>
+                <input type="checkbox" id="mode-custom-poso" style="display: none !important;">
+                
+                <div id="manual-ui">
+                    <div class="search-container pro-search-row">
+                        <span class="pro-search-icon">🔍</span>
+                        <input type="text" id="med-search" placeholder="Buscar medicação..." autocomplete="off" class="custom-input pro-input pro-search-input" style="flex: 1;">
+                        <button id="btn-voice-prescribe" class="pro-icon-btn" onclick="App.toggleVoice()" title="Voz">🎤</button>
+                        <button id="btn-fav-filter" class="pro-icon-btn" onclick="App.toggleFavFilter()" title="Favoritos">⭐</button>
+                        
+                        <div id="med-dropdown"></div>
+                    </div>
+                    
+                    <div id="panel-standard" class="pro-grid">
+                        <div class="pro-col">
+                            <label class="pro-label">Manhã</label>
+                            <div class="custom-spin-wrapper">
+                                <input type="number" id="dose-m" value="0" step="0.25" min="0" class="custom-input pro-input pro-number-input">
+                                <div class="spin-btns">
+                                    <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                    <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pro-col">
+                            <label class="pro-label">Tarde</label>
+                            <div class="custom-spin-wrapper">
+                                <input type="number" id="dose-t" value="0" step="0.25" min="0" class="custom-input pro-input pro-number-input">
+                                <div class="spin-btns">
+                                    <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                    <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pro-col">
+                            <label class="pro-label">Noite</label>
+                            <div class="custom-spin-wrapper">
+                                <input type="number" id="dose-n" value="0" step="0.25" min="0" class="custom-input pro-input pro-number-input">
+                                <div class="spin-btns">
+                                    <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                    <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="panel-inject" class="pro-grid hidden">
+                        <div class="pro-col">
+                            <label class="pro-label">Qtd. Ampolas</label>
+                            <div class="custom-spin-wrapper">
+                                <input type="number" id="inj-qty" value="0" min="0" class="custom-input pro-input pro-number-input">
+                                <div class="spin-btns">
+                                    <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                    <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pro-col">
+                            <label class="pro-label">Intervalo (Dias)</label>
+                            <div class="custom-spin-wrapper">
+                                <input type="number" id="inj-days" value="0" min="0" class="custom-input pro-input pro-number-input">
+                                <div class="spin-btns">
+                                    <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                    <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ✍️ PAINEL DE FORMA DE USO PRÓPRIA / PERSONALIZADA -->
+                    <div id="panel-custom-poso" class="custom-poso-panel hidden">
+                        <div class="custom-poso-header">
+                            <div class="custom-poso-title">
+                                <span class="custom-poso-icon">✏️</span>
+                                <span>Forma de Uso Própria / Livre</span>
+                            </div>
+                            <button type="button" class="custom-poso-clear-btn" onclick="App.clearCustomPoso()" title="Limpar campo">Limpar</button>
+                        </div>
+                        <textarea id="custom-poso-text" class="custom-input pro-input custom-poso-textarea" placeholder="Digite aqui o texto livre da forma de uso... Ex: Tomar 01 comprimido se houver dor intensa a cada 8 horas, no máximo 3 ao dia." rows="3"></textarea>
+                        
+                        <!-- 💡 SUGESTÃO DE USO MAIS COMUM BASEADA NA MEDICAÇÃO -->
+                        <div id="custom-poso-suggestion-card" class="custom-poso-suggestion-card" onclick="App.applyPosoSuggestion()" title="Clique para aplicar esta sugestão ao campo">
+                            <div class="custom-poso-suggestion-header">
+                                <span class="custom-poso-suggestion-badge">💡 Sugestão de Uso Mais Comum</span>
+                                <span class="custom-poso-suggestion-action">⚡ Aplicar sugestão</span>
+                            </div>
+                            <div id="custom-poso-suggestion-text" class="custom-poso-suggestion-text">
+                                Selecione uma medicação para ver a posologia mais comum.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Link para alternar entre padrão e próprio (aparece apenas quando uma medicação for selecionada) -->
+                    <div id="custom-poso-switch-bar" class="custom-poso-switch-bar hidden">
+                        <a href="javascript:void(0)" id="custom-poso-toggle-link" onclick="App.toggleCustomPoso(!App.isCustomPosoActive())" class="custom-poso-link">✍️ Digitar forma de uso própria / livre</a>
+                    </div>
+                </div>
+
+                <div id="fast-ui" class="hidden">
+                    <textarea id="fast-input" placeholder="Ex: Haldol Decanoato 1 ampola a cada 30 dias" class="custom-input pro-input" style="height: 100px; resize: none; margin-bottom: 20px !important;"></textarea>
+                </div>
+
+                <div class="pro-grid">
+                    <div class="pro-col hidden" id="qty-wrapper" style="flex: 0.4;">
+                        <label class="pro-label">Qtd.</label>
+                        <div class="custom-spin-wrapper">
+                            <input type="number" id="pack-qty" value="0" min="0" class="custom-input pro-input pro-number-input">
+                            <div class="spin-btns">
+                                <button class="spin-up" onclick="App.spin(this, 1)">▲</button>
+                                <button class="spin-down" onclick="App.spin(this, -1)">▼</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pro-col" id="pack-wrapper">
+                        <label class="pro-label">Embalagem</label>
+                        <select id="pack-type" class="custom-input pro-input pro-select">
+                            <option value="Uso contínuo" selected>Uso contínuo</option>
+                            <option value="Caixa(s)">Caixa(s)</option>
+                            <option value="Frasco(s)">Frasco(s)</option>
+                            <option value="Frasco(s)-Ampola(s)">Frasco(s)-Ampola(s)</option>
+                            <option value="Ampola(s)">Ampola(s)</option>
+                            <option value="Comprimido(s)">Comprimido(s)</option>
+                            <option value="Cápsula(s)">Cápsula(s)</option>
+                            <option value="Bisnaga(s)">Bisnaga(s)</option>
+                            <option value="Tubo(s)">Tubo(s)</option>
+                            <option value="Sachê(s)">Sachê(s)</option>
+                            <option value="Envelope(s)">Envelope(s)</option>
+                            <option value="Cartela(s)">Cartela(s) / Blister</option>
+                            <option value="Frasco(s) Conta-Gotas">Frasco(s) Conta-Gotas</option>
+                            <option value="Spray(s)">Spray(s) / Aerossol</option>
+                            <option value="Caneta(s)">Caneta(s) / Refil</option>
+                            <option value="Seringa(s) Preenchida(s)">Seringa(s) Preenchida(s)</option>
+                            <option value="Adesivo(s)">Adesivo(s) Transdérmico(s)</option>
+                            <option value="Pote(s)">Pote(s)</option>
+                            <option value="Pacote(s)">Pacote(s)</option>
+                            <option value="Unidade(s)">Unidade(s)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <input type="text" id="med-obs" placeholder="Complemento / Observação..." autocomplete="off" class="custom-input pro-input" style="margin-bottom: 20px !important;">
+                
+                <div style="display:flex; gap:12px; width: 100%; align-items: stretch; min-height: 56px;">
+                    <button class="pro-btn pro-btn-outline" id="add-btn" style="flex: 2; margin: 0; padding: 10px;" onclick="App.handleSave()">+ INCLUIR MEDICAMENTO</button>
+                    <button id="cancel-edit" class="pro-btn hidden" style="flex: 1; margin: 0; padding: 10px;" onclick="App.cancelEdit()">CANCELAR</button>
+                </div>
+
+                <!-- 📋 MINI-BARRA DE ACESSO RÁPIDO AOS ITENS JÁ INSERIDOS -->
+                <div id="quick-items-preview-bar" class="quick-items-preview-bar hidden" onclick="App.scrollToCardItems()" title="Clique para rolar até a lista completa de medicamentos"></div>
+            </div>
+
+            <div class="pro-section" id="card-items">
+                <div class="pro-section-title" style="cursor: pointer; justify-content: space-between;" onclick="window.toggleSectionSeguro('card-items')">
+                    <span style="display:flex; align-items:center; gap:8px;">📋 ITENS DA RECEITA</span>
+                    <span class="toggle-icon" style="color: #64748B;">▼</span>
+                </div>
+                <div class="card-content">
+                    <div id="ui-items-list" class="scrollable-list"></div>
+                    <div class="card-items-actions-grid">
+                        <button id="btn-copy-prescription" type="button" onclick="App.copyPrescription(); event.stopPropagation();" class="card-action-btn btn-copy" title="Copiar prescrição no formato de lote (RISPERIDONA 3 MG 01-00-01)">
+                            <span class="btn-icon-symbol">📋</span>
+                            <span class="btn-label-text">Copiar Prescrição</span>
+                        </button>
+                        <button id="clear-all" type="button" onclick="App.clearItems(); event.stopPropagation();" class="card-action-btn btn-clear" title="Excluir todas as medicações da lista">
+                            <span class="btn-icon-symbol">🗑️</span>
+                            <span class="btn-label-text">Excluir Lista</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pro-section collapsed" id="card-obs">
+                <div class="pro-section-title" style="cursor: pointer; justify-content: space-between;" onclick="window.toggleSectionSeguro('card-obs')">
+                    <span style="display:flex; align-items:center; gap:8px;">📝 OBSERVAÇÕES GERAIS</span>
+                    <span class="toggle-icon" style="color: #64748B;">▼</span>
+                </div>
+                <div class="card-content">
+                    <textarea id="obs-input" rows="3" placeholder="Ex: Retornar em 30 dias..." class="custom-input pro-input" style="resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <div style="padding: 10px 10px 40px 10px; display: flex; flex-direction: column; gap: 10px;">
+                <button class="pro-btn pro-btn-ai" onclick="window.toggleChat(event)">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    SUPORTE INTELIGENTE IA
+                </button>
+                
+                <button id="btn-batch-lme" class="pro-btn pro-btn-dark hidden" onclick="App.openBatchLME()">
+                    <span style="font-size: 1.1em; filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5));">💎</span>
+                    GERAR LMEs DE ALTO CUSTO
+                </button>
+            </div>
+
+        </div>
+
+        <div class="pro-dock" id="pro-dock-container" style="position: fixed !important; bottom: 0px !important; left: 85px !important; width: 445px !important; margin: 0 !important; padding: 0 !important; z-index: 2147483640 !important;">
+            <button class="pro-btn pro-btn-solid btn-print-enhanced" id="btn-print" onclick="App.printAndSave()" style="position: relative !important; width: 100% !important; min-height: 84px !important; height: 84px !important; margin: 0 !important; bottom: 0px !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-top-left-radius: 16px !important; border-top-right-radius: 16px !important;">
+                <span class="btn-shimmer-sweep"></span>
+                <div class="btn-print-inner">
+                    <div class="btn-print-main-group">
+                        <span class="btn-print-icon-box">
+                            <svg viewBox="0 0 24 24" class="btn-print-svg" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                <rect x="6" y="14" width="12" height="8"></rect>
+                            </svg>
+                        </span>
+                        <div class="btn-print-labels">
+                            <span class="btn-print-title">IMPRIMIR E REGISTRAR</span>
+                            <span class="btn-print-badge">
+                                <span class="badge-dot empty"></span>
+                                <span class="badge-count-text">0 itens na receita</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="btn-shortcut-chip" title="Atalho de impressão rápida">
+                        <kbd class="kbd-key">Ctrl</kbd><span class="kbd-plus">+</span><kbd class="kbd-key">P</kbd>
+                    </div>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <aside id="scheduling-sidebar" class="right-sidebar">
+        <div class="rs-indicator-bar" onclick="App.toggleScheduling()">
+            <div class="rs-icon-indicator">📅</div>
+            <div class="rs-vertical-text">AGENDA</div>
+        </div>
+        
+        <div class="rs-content">
+            <header class="rs-header" style="flex-shrink: 0; padding-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <h3 style="margin:0; color:var(--primary); font-size:1.2em; display: flex; align-items: center;">📅 Fila</h3>
+                        <button type="button" class="close-sidebar-btn" onclick="App.toggleScheduling()" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 1.1rem; cursor: pointer; padding: 2px 7px; border-radius: 6px; line-height: 1;" title="Fechar Agenda (Tab)">✕</button>
+                    </div>
+                    
+                    <div class="modern-date-wrapper" style="width: 160px;" onclick="document.getElementById('filter-date').click()">
+                        <div class="m-date-icon">🔍</div>
+                        <input type="text" id="filter-date" readonly class="m-date-input" placeholder="Todas as datas" title="Filtrar por data">
+                        <div class="m-date-highlight"></div>
+                    </div>
+                </div>
+                
+                <div id="doctor-filter-container"></div>
+                
+                <div class="agenda-dashboard" id="agenda-dashboard" style="display: flex; gap: 10px; margin-top: 15px;">
+                    <div class="dash-item" style="flex: 1; text-align: center; background: rgba(255,255,255,0.05); padding: 12px 5px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"><span class="dash-num" id="dash-total" style="display: block; font-size: 1.5em; font-weight: 800; color: #38bdf8;">0</span><span class="dash-label" style="font-size: 0.75em; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total</span></div>
+                    <div class="dash-item waiting" style="flex: 1; text-align: center; background: rgba(255,255,255,0.05); padding: 12px 5px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"><span class="dash-num" id="dash-waiting" style="display: block; font-size: 1.5em; font-weight: 800; color: #4ade80;">0</span><span class="dash-label" style="font-size: 0.75em; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Faltam</span></div>
+                    <div class="dash-item attended" style="flex: 1; text-align: center; background: rgba(255,255,255,0.05); padding: 12px 5px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);"><span class="dash-num" id="dash-attended" style="display: block; font-size: 1.5em; font-weight: 800; color: #38bdf8;">0</span><span class="dash-label" style="font-size: 0.75em; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Atend.</span></div>
+                </div>
+            </header>
+
+            <div class="add-med-box" style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;">
+                <div id="agenda-add-section">
+                    <div id="doctor-select-container"></div>
+                    
+                    <input type="text" id="sched-name" placeholder="Nome do Paciente" class="custom-input" style="margin-bottom: 12px; height: 45px; padding: 0 12px; width: 100%; box-sizing: border-box;" autocomplete="off">
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; height: 45px; width: 100%;">
+                        <div class="modern-date-wrapper" style="width: 160px; height: 100%;" onclick="document.getElementById('sched-date').click()">
+                            <div class="m-date-icon">📆</div>
+                            <input type="text" id="sched-date" readonly class="m-date-input" placeholder="Data" title="Data do Agendamento">
+                            <div class="m-date-highlight"></div>
+                        </div>
+                        <button class="btn-primary" onclick="App.addAppointment()" style="flex: 1; height: 100% !important; margin: 0 !important; padding: 0 15px !important; border-radius: 10px !important; white-space: nowrap !important; display: flex !important; align-items: center !important; justify-content: center !important; font-weight: bold; box-sizing: border-box !important; background-color: #38bdf8; color: #020617;">+ Inserir</button>
+                    </div>
+                    
+                    <button id="btn-import-agenda" class="btn-secondary full-width" style="margin: 0 !important; padding: 12px; font-size: 0.9em; border-radius: 10px; border: 1px dashed var(--primary); color: var(--primary); background: rgba(0, 210, 180, 0.05); cursor: pointer; width: 100%; transition: 0.2s;" onclick="App.openImportModal()">📥 Importar Lista (Texto)</button>
+                </div>
+
+                <div id="agenda-search-section" class="hidden" style="margin-bottom: 12px;">
+                    <div style="position: relative; width: 100%; height: 48px;">
+                        <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #38bdf8; font-size: 1.2rem; pointer-events: none; opacity: 0.8;">🔍</span>
+                        <input type="text" id="agenda-search-input" placeholder="Buscar paciente na fila..." autocomplete="off" oninput="App.renderSchedule()" style="width: 100%; height: 100%; background: rgba(2, 6, 23, 0.6); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; padding: 0 15px 0 45px; color: #f8fafc; font-size: 1rem; outline: none; box-sizing: border-box; transition: all 0.3s ease; font-family: inherit;" onfocus="this.style.background='rgba(15, 23, 42, 0.9)'; this.style.borderColor='#38bdf8'; this.style.boxShadow='0 0 15px rgba(56, 189, 248, 0.2)';" onblur="this.style.background='rgba(2, 6, 23, 0.6)'; this.style.borderColor='rgba(56, 189, 248, 0.3)'; this.style.boxShadow='none';">
+                    </div>
+                </div>
+            </div>
+
+            <div id="bulk-actions-container" class="hidden" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: rgba(255,85,85,0.05); padding: 12px 15px; border-radius: 12px; border: 1px dashed var(--danger); flex-shrink: 0; gap: 10px; flex-wrap: nowrap;">
+                <label class="custom-checkbox-wrapper" style="margin: 0; display: flex; align-items: center; cursor: pointer; flex-shrink: 0; max-width: 60%; overflow: hidden;">
+                    <input type="checkbox" id="select-all-cb" onchange="App.toggleSelectAll(this.checked)" style="display: none;">
+                    <span class="custom-checkmark" style="flex-shrink: 0;"></span>
+                    <span style="font-size: 0.85em; color: var(--text-main); font-weight: bold; margin-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0;">Selecionar Todos</span>
+                </label>
+                <button id="btn-bulk-delete" class="btn-cancel" style="background: var(--danger); color: white; border: none; padding: 8px 14px; font-size: 0.85em; border-radius: 8px; font-weight: bold; opacity: 0.5; pointer-events: none; cursor: pointer; transition: 0.2s; white-space: nowrap; width: auto !important; margin: 0 !important; flex-shrink: 0;" onclick="App.bulkDeleteAppointments()">🗑️ Apagar (0)</button>
+            </div>
+
+            <div id="scheduling-list"></div>
+        </div>
+    </aside>
+
+    <section class="preview-pane">
+
+        <div class="zoom-container" id="preview-container"></div>
+
+    </section>
+</main>
+
+<div class="chat-container" id="chatWindow">
+    <div class="chat-header">
+        <div class="chat-header-info">
+            <p class="chat-titulo">Suporte Inteligente</p>
+            <span class="chat-status">IA CAPS Online</span>
+        </div>
+        <button class="btn-fechar-chat" onclick="window.closeChat(event)">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+    <div class="chat-body" id="chatBody">
+        <div class="mensagem bot-msg">
+            Olá! 👋 Sou a Inteligência Artificial de suporte do sistema CAPS.<br><br>Você pode me perguntar com suas próprias palavras sobre como gerar receitas, como usar o lote para injetáveis ou comprimidos (SOS), atalhos e muito mais.
+        </div>
+    </div>
+    <div class="chat-footer">
+        <input type="text" id="userInput" class="chat-input" placeholder="Digite sua dúvida aqui..." autocomplete="off" onkeypress="verificarEnter(event)">
+        <button class="btn-enviar" onclick="enviarMensagem()">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+    </div>
+</div>
+
+<!-- BARRA DE AÇÕES FLUTUANTES (APPLE EXECUTIVE FLOATING ACTIONS) -->
+<div id="floating-actions-container">
+    <button class="float-action-btn" id="btn-float-drawer" onclick="App.toggleDrawer()" data-tooltip="Prontuário (Alt+I)">
+        <div class="btn-icon-content">📂</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-agenda" onclick="App.toggleScheduling()" data-tooltip="Agenda (Tab)">
+        <div class="btn-icon-content">📅</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-exams" onclick="App.openExamsModal()" data-tooltip="Solicitar Exames">
+        <div class="btn-icon-content">🩸</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-lme" onclick="App.openBatchLME()" data-tooltip="Gerar LME">
+        <div class="btn-icon-content">💎</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-internamento" onclick="App.generateAutoWardPrescription()" data-tooltip="Internamento Automático">
+        <div class="btn-icon-content">🏥</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-units" onclick="App.openUnitPortal()" data-tooltip="Unidade de Atendimento (Trocar Cabeçalho)">
+        <div class="btn-icon-content">🏢</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-stats" onclick="App.openStats()" data-tooltip="Epidemiologia & Estatísticas">
+        <div class="btn-icon-content">📊</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-settings" onclick="(window.SettingsPro ? window.SettingsPro.open() : (typeof openSettingsPro === 'function' ? openSettingsPro() : App.openSettings()))" data-tooltip="Configurações (Alt+C)">
+        <div class="btn-icon-content">⚙️</div>
+    </button>
+    <button class="float-action-btn" id="btn-float-logout" onclick="App.logout()" data-tooltip="Sair do Sistema">
+        <div class="btn-icon-content" style="display: flex; align-items: center; justify-content: center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); transform: translateX(2px);">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </div>
+    </button>
+</div>
+
+<script src="dados.js"></script>
+<script src="voz.js"></script>
+<script type="module" src="script.js?v=20261013_floating_bar_fixed_v20"></script>
+<script defer src="preview-zoom.js?v=20261011_print_fix_v1"></script>
+<script defer src="lote-pro.js?v=20261012_intellisense_v1"></script>
+<script defer src="settings-pro.js?v=20261013_floating_bar_fixed_v20"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('wheel', (e) => {
+            const wrapper = e.target.closest('.custom-spin-wrapper');
+            if (wrapper) {
+                const input = wrapper.querySelector('input[type="number"]');
+                if (input) {
+                    e.preventDefault(); e.stopImmediatePropagation(); 
+                    const btnFracao = document.getElementById('mode-fraction');
+                    const modoFracaoAtivo = btnFracao ? btnFracao.checked : false;
+                    let val = parseFloat(input.value) || 0;
+                    const min = parseFloat(input.getAttribute('min')) || 0;
+                    const passo = modoFracaoAtivo ? 0.25 : 1;
+                    
+                    if (!modoFracaoAtivo && val % 1 !== 0) val = Math.floor(val);
+                    if (e.deltaY < 0) val += passo; else val -= passo; 
+                    if (val < min) val = min;
+                    
+                    if (modoFracaoAtivo) val = Number(val.toFixed(2));
+                    else val = Math.round(val);
+                    
+                    input.value = val;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }, { passive: false, capture: true });
+    });
+
+    // ⚠️ SEGURANÇA: Chave movida para variável. Em produção, use um proxy server-side (Firebase Cloud Function).
+    // Revogar esta chave no Google Cloud Console e gerar uma nova restrita.
+    const GEMINI_API_KEY = "AIzaSyB6hsQkXzEEtkVbXA8jMEA3TpoMseg1hZ8"; 
+    const contextoDoSistema = `Você é a IA de suporte de um sistema de prescrição médica. Responda APENAS em texto puro, sem usar tags HTML, sem markdown com links, e sem código JavaScript.`;
+
+    window.toggleChat = function(e) { 
+        if(e) { e.stopPropagation(); e.preventDefault(); }
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) {
+            chatWindow.classList.toggle('ativo'); 
+        }
+    }
+
+    window.closeChat = function(e) {
+        if(e) { e.stopPropagation(); e.preventDefault(); }
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) {
+            chatWindow.classList.remove('ativo'); 
+        }
+    }
+    
+    function verificarEnter(event) { if (event.key === "Enter") enviarMensagem(); }
+
+    window.enviarMensagem = async function() {
+        const inputField = document.getElementById('userInput');
+        const textoUsuario = inputField.value.trim();
+        if (textoUsuario === "") return;
+
+        adicionarBalaoNaTela(textoUsuario, 'user-msg');
+        inputField.value = ""; 
+        const idDigitando = "digitando-" + Date.now();
+        
+        adicionarBalaoNaTela("<div class='typing-indicator'><span></span><span></span><span></span></div>", 'bot-msg', idDigitando);
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+        try {
+            const respostaDaAPI = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: contextoDoSistema + "\n\n" + textoUsuario }] }] }) });
+            const dados = await respostaDaAPI.json();
+            removerBalao(idDigitando);
+            if (dados.candidates && dados.candidates.length > 0) adicionarBalaoNaTela(dados.candidates[0].content.parts[0].text, 'bot-msg');
+            else adicionarBalaoNaTela("Erro. Tente de novo.", 'bot-msg');
+        } catch (erro) {
+            removerBalao(idDigitando);
+            adicionarBalaoNaTela("Erro de conexão.", 'bot-msg');
+        }
+    }
+
+    function adicionarBalaoNaTela(texto, classeEstilo, idOpcional = null) {
+        const chatBody = document.getElementById('chatBody');
+        const div = document.createElement('div');
+        div.className = `mensagem ${classeEstilo}`;
+        // CORREÇÃO DE SEGURANÇA: Sanitiza HTML para prevenir XSS
+        if (idOpcional && idOpcional.startsWith('digitando-')) {
+            div.innerHTML = texto; // Typing indicator usa HTML interno seguro
+        } else if (classeEstilo === 'user-msg') {
+            div.textContent = texto; // Mensagem do usuário: nunca permite HTML
+        } else {
+            // Bot: escapa HTML mas permite quebras de linha
+            const escaped = texto.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            div.innerHTML = escaped.replace(/\n/g, '<br>');
+        }
+        if (idOpcional) div.id = idOpcional;
+        chatBody.appendChild(div);
+        setTimeout(() => { chatBody.scrollTop = chatBody.scrollHeight; }, 50);
+    }
+
+    function removerBalao(id) { const balao = document.getElementById(id); if (balao) balao.remove(); }
+
+    document.addEventListener('click', function(event) {
+        const chatWindow = document.getElementById('chatWindow');
+        const btnOpenChat = document.querySelector('.pro-btn-ai');
+        if (chatWindow && chatWindow.classList.contains('ativo')) {
+            if (!chatWindow.contains(event.target) && btnOpenChat && !btnOpenChat.contains(event.target)) {
+                chatWindow.classList.remove('ativo');
+            }
+        }
+    });
+
+    window.toggleSectionSeguro = function(id) {
+        const section = document.getElementById(id);
+        if (section) {
+            section.classList.toggle('collapsed');
+        }
+    };
+</script>
+</body>
+</html>

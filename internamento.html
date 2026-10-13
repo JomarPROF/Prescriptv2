@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescrição de Internamento - CAPS</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* ==========================================================================
+           CONFIGURAÇÕES GERAIS E VARIÁVEIS
+           ========================================================================== */
+        :root {
+            --primary: #0284c7;
+            --danger: #ef4444;
+            --bg-body: #f1f5f9;
+            --border-color: #000;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 0;
+            color: #000;
+        }
+
+        /* ==========================================================================
+           TOOLBAR (BARRA DE FERRAMENTAS FIXA)
+           ========================================================================== */
+        .toolbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            background: #1e293b;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #0369a1; }
+        
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+
+        /* ==========================================================================
+           ESTRUTURA DA PÁGINA A4
+           ========================================================================== */
+        .container-wrapper {
+            margin-top: 80px; /* Espaço para a toolbar */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding-bottom: 40px;
+        }
+
+        .a4-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            padding: 15mm;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* ==========================================================================
+           CABEÇALHO INSTITUCIONAL (Baseado no PDF)
+           ========================================================================== */
+        .header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-logo-placeholder {
+            width: 80px;
+            height: 80px;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            text-align: center;
+            color: #666;
+            margin-right: 15px;
+        }
+
+        .header-text {
+            flex: 1;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .header-text h1 { margin: 0; font-size: 16px; text-transform: uppercase; }
+        .header-text h2 { margin: 3px 0 0 0; font-size: 14px; }
+        .header-text h3 { margin: 10px 0 0 0; font-size: 18px; font-weight: bold; text-decoration: underline; }
+
+        /* ==========================================================================
+           INFORMAÇÕES DO PACIENTE
+           ========================================================================== */
+        .patient-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .info-field {
+            display: flex;
+            gap: 5px;
+        }
+
+        .editable-line {
+            border-bottom: 1px solid var(--border-color);
+            min-width: 150px;
+            outline: none;
+            font-weight: normal;
+        }
+
+        .editable-line:focus { background-color: #f0f8ff; }
+
+        /* ==========================================================================
+           TABELA DE PRESCRIÇÃO E APRAZAMENTO
+           ========================================================================== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 6px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f9fafb;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .col-num { width: 30px; text-align: center; font-weight: bold;}
+        .col-med { width: auto; }
+        .col-time { width: 35px; text-align: center; cursor: pointer; }
+        
+        .time-header-group { letter-spacing: 2px; }
+
+        .editable-area {
+            width: 100%;
+            min-height: 30px;
+            outline: none;
+        }
+        .editable-area:focus { background-color: #f0f8ff; }
+
+        /* Círculo do Aprazamento */
+        .circle-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-weight: bold;
+            color: transparent;
+            transition: 0.2s;
+        }
+
+        .col-time:hover .circle-toggle { border: 1px dashed #ccc; }
+        .circle-toggle.active { border: 2px solid #000; color: #000; }
+
+        /* Botão remover linha (escondido na impressão) */
+        .btn-remove-row {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            float: right;
+            margin-top: 2px;
+        }
+
+        /* ==========================================================================
+           ASSINATURAS E EVOLUÇÃO
+           ========================================================================== */
+        .signatures {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .signature-line {
+            width: 250px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 5px;
+        }
+
+        .evolution-box {
+            width: 100%;
+            min-height: 500px;
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            box-sizing: border-box;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .evolution-box:focus { background-color: #f0f8ff; }
+
+        /* ==========================================================================
+           MODO DE IMPRESSÃO (Oculta controles da UI)
+           ========================================================================== */
+        @media print {
+            .toolbar, .no-print { display: none !important; }
+            .a4-page { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; page-break-after: always; }
+            .a4-page:last-child { page-break-after: auto; }
+            .container-wrapper { margin-top: 0; gap: 0; }
+            .editable-line, .editable-area, .evolution-box { background-color: transparent !important; }
+        }
+        
+        /* Classe usada especificamente na hora de gerar o PDF via html2pdf */
+        .pdf-mode .no-print { display: none !important; }
+        .pdf-mode .editable-line, .pdf-mode .editable-area, .pdf-mode .evolution-box { background-color: transparent !important; }
+        
+        .html2pdf__page-break { height: 0; page-break-before: always; margin: 0; border: 0; }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar no-print">
+        <button class="btn btn-danger" onclick="clearData()">🗑️ Limpar Dados</button>
+        <button class="btn btn-success" onclick="addMedication()">➕ Adicionar Medicação</button>
+        <button class="btn btn-primary" onclick="generatePDF()">🖨️ Gerar PDF / Imprimir</button>
+    </div>
+
+    <div class="container-wrapper" id="print-container">
+        
+        <div class="a4-page" id="page-1">
+            
+            <div class="header">
+                <div class="header-logo-placeholder">
+                    Feira<br>Logo
+                </div>
+                <div class="header-text">
+                    <h2>TODO DIA TEM TRABALHO CHEGANDO</h2>
+                    <h1>REDE MUNICIPAL DE ATENÇÃO EM SAÚDE MENTAL</h1>
+                    <h2>CENTRO DE ATENÇÃO PSICOSSOCIAL DR. JOÃO CARLOS LOPES CAVALCANTE</h2>
+                    <h3>PRESCRIÇÃO MÉDICA</h3>
+                </div>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-field" style="flex: 1;">
+                    <span>PACIENTE:</span>
+                    <div class="editable-line" style="flex: 1;" contenteditable="true" id="patient-name" oninput="saveData()"></div>
+                </div>
+                <div class="info-field" style="margin-left: 15px;">
+                    <span>PRONTUÁRIO:</span>
+                    <div class="editable-line" style="width: 100px;" contenteditable="true" id="patient-record" oninput="saveData()"></div>
+                </div>
+                <div class="info-field" style="margin-left: 15px;">
+                    <span>DATA:</span>
+                    <div class="editable-line" style="width: 100px;" contenteditable="true" id="prescription-date" oninput="saveData()"></div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">№</th>
+                        <th rowspan="2" style="width: 45%;">PRESCRIÇÃO MEDICAMENTOSA</th>
+                        <th colspan="12" class="time-header-group">APRAZAMENTO</th>
+                    </tr>
+                    <tr id="time-headers">
+                        <th>06</th><th>08</th><th>10</th><th>12</th><th>14</th><th>16</th>
+                        <th>18</th><th>20</th><th>22</th><th>00</th><th>02</th><th>04</th>
+                    </tr>
+                </thead>
+                <tbody id="med-tbody">
+                    </tbody>
+            </table>
+
+            <div class="signatures">
+                <div class="signature-line">ASSINATURA DO MÉDICO PRESCRITOR</div>
+                <div class="signature-line">ASSINATURA DO ENFERMEIRO - APRAZAMENTO</div>
+            </div>
+        </div>
+
+        <div class="html2pdf__page-break"></div>
+
+        <div class="a4-page" id="page-2">
+            
+            <div class="header">
+                <div class="header-logo-placeholder">
+                    Feira<br>Logo
+                </div>
+                <div class="header-text">
+                    <h2>TODO DIA TEM TRABALHO CHEGANDO</h2>
+                    <h1>REDE MUNICIPAL DE ATENÇÃO EM SAÚDE MENTAL</h1>
+                    <h2>CENTRO DE ATENÇÃO PSICOSSOCIAL DR. JOÃO CARLOS LOPES CAVALCANTE</h2>
+                    <h3>EVOLUÇÃO MÉDICA</h3>
+                </div>
+            </div>
+
+            <div class="patient-info">
+                <div class="info-field" style="flex: 1;">
+                    <span>PACIENTE:</span>
+                    <div class="editable-line" style="flex: 1;" id="patient-name-copy"></div>
+                </div>
+                <div class="info-field" style="margin-left: 15px;">
+                    <span>DATA:</span>
+                    <div class="editable-line" style="width: 100px;" id="prescription-date-copy"></div>
+                </div>
+            </div>
+
+            <div class="evolution-box" contenteditable="true" id="evolution-text" oninput="saveData()" placeholder="Digite a evolução médica aqui..."></div>
+
+            <div class="signatures">
+                <div class="signature-line">ASSINATURA / CARIMBO DO MÉDICO</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Horários fixos conforme o formulário
+        const TIMES = ['06', '08', '10', '12', '14', '16', '18', '20', '22', '00', '02', '04'];
+        
+        // Estado da aplicação
+        let prescriptionData = {
+            patientName: '',
+            patientRecord: '',
+            date: '',
+            evolution: '',
+            meds: []
+        };
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            
+            // Espelhar nome e data da página 1 para a página 2
+            document.getElementById('patient-name').addEventListener('input', (e) => {
+                document.getElementById('patient-name-copy').innerText = e.target.innerText;
+            });
+            document.getElementById('prescription-date').addEventListener('input', (e) => {
+                document.getElementById('prescription-date-copy').innerText = e.target.innerText;
+            });
+        });
+
+        /**
+         * Adiciona uma nova medicação vazia
+         */
+        function addMedication() {
+            prescriptionData.meds.push({
+                text: 'Nome do Medicamento, Dose, Via, Frequência...',
+                times: {} // Objeto para armazenar true/false para cada horário
+            });
+            saveData();
+            renderTable();
+        }
+
+        /**
+         * Remove uma medicação pelo índice
+         */
+        function removeMedication(index) {
+            if (confirm('Tem certeza que deseja remover esta medicação?')) {
+                prescriptionData.meds.splice(index, 1);
+                saveData();
+                renderTable();
+            }
+        }
+
+        /**
+         * Alterna a marcação de um horário (Círculo de aprazamento)
+         */
+        function toggleTime(medIndex, timeString) {
+            if (!prescriptionData.meds[medIndex].times[timeString]) {
+                prescriptionData.meds[medIndex].times[timeString] = true;
+            } else {
+                prescriptionData.meds[medIndex].times[timeString] = false;
+            }
+            saveData();
+            renderTable();
+        }
+
+        /**
+         * Renderiza a tabela de medicações baseada no estado atual
+         */
+        function renderTable() {
+            const tbody = document.getElementById('med-tbody');
+            tbody.innerHTML = '';
+
+            // Renderiza 9 linhas no mínimo para manter o layout estético da folha, 
+            // ou mais se o array tiver crescido.
+            const minRows = 9;
+            const rowsToRender = Math.max(prescriptionData.meds.length, minRows);
+
+            for (let i = 0; i < rowsToRender; i++) {
+                const tr = document.createElement('tr');
+                const med = prescriptionData.meds[i];
+
+                // 1. Coluna de Número
+                const tdNum = document.createElement('td');
+                tdNum.className = 'col-num';
+                tdNum.innerText = (i + 1).toString().padStart(2, '0');
+                tr.appendChild(tdNum);
+
+                // 2. Coluna de Prescrição (Texto editável)
+                const tdMed = document.createElement('td');
+                tdMed.className = 'col-med';
+                
+                if (med) {
+                    const divEdit = document.createElement('div');
+                    divEdit.className = 'editable-area';
+                    divEdit.contentEditable = true;
+                    divEdit.innerText = med.text;
+                    divEdit.onblur = (e) => {
+                        prescriptionData.meds[i].text = e.target.innerText;
+                        saveData();
+                    };
+                    tdMed.appendChild(divEdit);
+
+                    // Botão de exclusão (Fica escondido no print)
+                    const btnRemove = document.createElement('button');
+                    btnRemove.className = 'btn-remove-row no-print';
+                    btnRemove.innerHTML = '✖';
+                    btnRemove.title = 'Remover linha';
+                    btnRemove.onclick = () => removeMedication(i);
+                    tdMed.appendChild(btnRemove);
+                }
+                tr.appendChild(tdMed);
+
+                // 3. Colunas de Horários (12 colunas)
+                TIMES.forEach(time => {
+                    const tdTime = document.createElement('td');
+                    tdTime.className = 'col-time';
+                    
+                    if (med) {
+                        tdTime.onclick = () => toggleTime(i, time);
+                        const circle = document.createElement('div');
+                        circle.className = 'circle-toggle';
+                        // Mostra uma bolinha ou letra 'O' quando ativo
+                        if (med.times[time]) {
+                            circle.classList.add('active');
+                            circle.innerText = 'O'; 
+                        }
+                        tdTime.appendChild(circle);
+                    }
+                    tr.appendChild(tdTime);
+                });
+
+                tbody.appendChild(tr);
+            }
+        }
+
+        /**
+         * Salva os dados no LocalStorage
+         */
+        function saveData() {
+            // Captura dados soltos do cabeçalho e rodapé
+            prescriptionData.patientName = document.getElementById('patient-name').innerText;
+            prescriptionData.patientRecord = document.getElementById('patient-record').innerText;
+            prescriptionData.date = document.getElementById('prescription-date').innerText;
+            prescriptionData.evolution = document.getElementById('evolution-text').innerText;
+
+            localStorage.setItem('prescriptInternamento', JSON.stringify(prescriptionData));
+        }
+
+        /**
+         * Carrega os dados do LocalStorage ao abrir a página
+         */
+        function loadData() {
+            const saved = localStorage.getItem('prescriptInternamento');
+            if (saved) {
+                prescriptionData = JSON.parse(saved);
+                
+                // Popula a UI
+                document.getElementById('patient-name').innerText = prescriptionData.patientName || '';
+                document.getElementById('patient-name-copy').innerText = prescriptionData.patientName || '';
+                
+                document.getElementById('patient-record').innerText = prescriptionData.patientRecord || '';
+                
+                document.getElementById('prescription-date').innerText = prescriptionData.date || '';
+                document.getElementById('prescription-date-copy').innerText = prescriptionData.date || '';
+                
+                document.getElementById('evolution-text').innerText = prescriptionData.evolution || '';
+            }
+            
+            // Se não houver medicações, inicia com uma para exemplo
+            if (prescriptionData.meds.length === 0) {
+                addMedication();
+            } else {
+                renderTable();
+            }
+        }
+
+        /**
+         * Limpa todo o formulário
+         */
+        function clearData() {
+            if (confirm('Deseja realmente apagar todos os dados desta prescrição?')) {
+                prescriptionData = {
+                    patientName: '',
+                    patientRecord: '',
+                    date: '',
+                    evolution: '',
+                    meds: []
+                };
+                
+                document.getElementById('patient-name').innerText = '';
+                document.getElementById('patient-name-copy').innerText = '';
+                document.getElementById('patient-record').innerText = '';
+                document.getElementById('prescription-date').innerText = '';
+                document.getElementById('prescription-date-copy').innerText = '';
+                document.getElementById('evolution-text').innerText = '';
+                
+                addMedication(); // Recria a tabela com 1 item vazio
+                saveData();
+            }
+        }
+
+        /**
+         * Gera o PDF utilizando a biblioteca html2pdf
+         */
+        function generatePDF() {
+            // Prepara a UI para o modo PDF (Oculta botões e ajusta bordas de edição)
+            const element = document.getElementById('print-container');
+            element.classList.add('pdf-mode');
+
+            // Garante que o texto de evolução não perca a formatação de linhas no clone do Canvas
+            const evolutionDiv = document.getElementById('evolution-text');
+            const originalEvolText = evolutionDiv.innerHTML;
+
+            const opt = {
+                margin:       [0, 0, 0, 0],
+                filename:     `Prescricao_${prescriptionData.patientName.replace(/\\s+/g, '_') || 'Internamento'}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: 'css', before: '.html2pdf__page-break' }
+            };
+
+            // Gera o PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restaura a UI ao terminar
+                element.classList.remove('pdf-mode');
+            });
+        }
+    </script>
+
+</body>
+</html>

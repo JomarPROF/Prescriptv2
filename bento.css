@@ -1,0 +1,580 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+/* ==========================================================================
+   1. ROOT VARIABLES & TOKENS (Bento Dark Mode)
+   ========================================================================== */
+:root {
+    --bg-base: #050505;
+    --bento-bg: rgba(25, 27, 33, 0.6);
+    --bento-border: 1px solid rgba(255, 255, 255, 0.08);
+    --bento-radius: 28px;
+    
+    --accent: #00d2b4;
+    --accent-glow: rgba(0, 210, 180, 0.2);
+    --accent-hover: #00ebc9;
+    
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    
+    --font-sans: 'Inter', sans-serif;
+    --font-display: 'Outfit', sans-serif;
+    
+    --ease-bounce: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ==========================================================================
+   2. GLOBAL RESET & BODY (Radial Gradient)
+   ========================================================================== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-base) !important;
+    background-image: radial-gradient(circle at 90% -10%, rgba(0, 210, 180, 0.15) 0%, transparent 40%) !important;
+    background-attachment: fixed;
+    color: var(--text-main) !important;
+    font-family: var(--font-sans) !important;
+    height: 100vh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+    padding: 24px !important;
+    margin: 0 !important;
+}
+
+.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* ==========================================================================
+   3. BENTO GRID ARCHITECTURE (The Islands)
+   ========================================================================== */
+#app-interface {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    gap: 24px !important;
+    align-items: stretch !important;
+}
+
+/* Base Bento Island Style */
+.sidebar, .preview-pane, #scheduling-sidebar, #prontuario-drawer, .settings-remastered {
+    background: var(--bento-bg) !important;
+    backdrop-filter: blur(40px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    border: var(--bento-border) !important;
+    border-radius: var(--bento-radius) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* Sidebar (Left) */
+.sidebar {
+    width: 380px !important;
+    min-width: 380px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 24px !important;
+    margin: 0 !important;
+    height: 100% !important;
+    z-index: 10 !important;
+}
+
+/* Preview Pane (Center) */
+.preview-pane {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 30px !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+    height: 100% !important;
+}
+
+/* Scheduling Sidebar (Right) */
+#scheduling-sidebar {
+    width: 350px !important;
+    min-width: 350px !important;
+    padding: 24px !important;
+    margin: 0 !important;
+    height: 100% !important;
+    right: 0 !important;
+    transform: none !important;
+}
+#scheduling-sidebar.hidden-right {
+    transform: translateX(400px) !important; /* Slide out of screen smoothly */
+    opacity: 0 !important;
+}
+
+/* ==========================================================================
+   4. TYPOGRAPHY
+   ========================================================================== */
+h1, h2, h3, .pro-section-title, .brand-icon-wrapper, #patient-name {
+    font-family: var(--font-display) !important;
+    font-weight: 700 !important;
+}
+.pro-section-title {
+    font-size: 1.1rem !important;
+    color: var(--text-main) !important;
+    margin-bottom: 16px !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* ==========================================================================
+   5. MASSIVE & MODERN INPUTS
+   ========================================================================== */
+input, select, textarea, .custom-input, .pro-input, .lme-glass-input {
+    width: 100% !important;
+    height: 60px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 16px !important;
+    color: var(--text-main) !important;
+    font-family: var(--font-sans) !important;
+    font-size: 1.1rem !important;
+    padding: 0 20px !important;
+    transition: all 0.3s var(--ease-out) !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+}
+
+textarea {
+    height: auto !important;
+    padding: 20px !important;
+    resize: vertical !important;
+}
+
+input:focus, select:focus, textarea:focus, .custom-input:focus, .lme-glass-input:focus {
+    border-color: transparent !important;
+    border-bottom: 2px solid var(--accent) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: rgba(255,255,255,0.3) !important;
+}
+
+/* Patient Name specific (Bigger) */
+#patient-name {
+    height: 70px !important;
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+    border-radius: 20px !important;
+    margin-bottom: 20px !important;
+}
+
+/* Number inputs / Posology */
+.pro-number-input, #dose-m, #dose-t, #dose-n {
+    font-family: var(--font-display) !important;
+    font-size: 1.4rem !important;
+    text-align: center !important;
+    padding-right: 44px !important;
+}
+.custom-spin-wrapper {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+}
+.spin-btns {
+    position: absolute !important;
+    top: 1px !important;
+    right: 1px !important;
+    bottom: 1px !important;
+    width: 42px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-left: 1px solid rgba(255,255,255,0.05) !important;
+    border-radius: 0 16px 16px 0 !important;
+    overflow: hidden !important;
+    z-index: 2 !important;
+}
+.spin-btns button {
+    flex: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.8rem !important;
+    cursor: pointer !important;
+    transition: background 0.2s !important;
+}
+.spin-btns button:hover {
+    background: var(--accent-glow) !important;
+    color: var(--accent) !important;
+}
+
+/* ==========================================================================
+   6. PREMIUM BUTTONS
+   ========================================================================== */
+.pro-btn, button {
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    border-radius: 16px !important;
+    cursor: pointer !important;
+    transition: all 0.4s var(--ease-bounce) !important;
+    border: none !important;
+}
+
+/* Print Pill Button */
+#btn-print-recipe, .print-btn, .lme-generate-btn {
+    border-radius: 9999px !important; /* Pill shape */
+    background: linear-gradient(135deg, var(--accent) 0%, #00a48d 100%) !important;
+    color: #000 !important;
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
+    padding: 16px 32px !important;
+    height: 64px !important;
+    box-shadow: 0 10px 25px rgba(0, 210, 180, 0.4) !important;
+    position: relative;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#btn-print-recipe:hover, .lme-generate-btn:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 0 15px 35px rgba(0, 210, 180, 0.6) !important;
+}
+#btn-print-recipe:active, .lme-generate-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* Standard UI Actions */
+.btn-save, .pro-btn-solid {
+    background: var(--accent) !important;
+    color: #000 !important;
+    box-shadow: 0 4px 15px var(--accent-glow) !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+}
+.btn-save:hover, .pro-btn-solid:hover {
+    transform: translateY(-2px) !important;
+    background: var(--accent-hover) !important;
+}
+
+.btn-cancel, .pro-btn-outline {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: var(--text-main) !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+}
+.btn-cancel:hover, .pro-btn-outline:hover {
+    background: rgba(255,255,255,0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ==========================================================================
+   7. CARDS (Medication List / Agenda)
+   ========================================================================== */
+#card-items .card-box, .agenda-card, .lme-step-box {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 20px !important;
+    padding: 20px !important;
+    margin-bottom: 16px !important;
+    transition: all 0.4s var(--ease-bounce) !important;
+}
+
+#card-items .card-box:hover, .agenda-card:hover {
+    transform: translateY(-5px) !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4) !important;
+}
+
+.card-title, .agenda-name {
+    font-family: var(--font-display) !important;
+    font-size: 1.2rem !important;
+    color: var(--accent) !important;
+    font-weight: 600 !important;
+}
+
+/* ==========================================================================
+   8. TOGGLE SWITCH (iOS Style, Neon Accent)
+   ========================================================================== */
+.pro-segmented {
+    display: flex !important;
+    gap: 16px !important;
+    margin-bottom: 20px !important;
+    background: transparent !important;
+}
+.pro-segment-item {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    flex: 1 !important;
+    background: rgba(0,0,0,0.4) !important;
+    border-radius: 99px !important;
+    padding: 4px !important;
+    height: 48px !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+}
+.pro-segment-item input[type="checkbox"] {
+    appearance: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    margin: 0 !important;
+    cursor: pointer !important;
+    opacity: 0 !important;
+    z-index: 2 !important;
+}
+/* The Switch Track */
+.pro-segment-item::before {
+    content: '';
+    position: absolute;
+    right: 8px;
+    width: 44px;
+    height: 24px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+    transition: all 0.3s var(--ease-bounce);
+}
+/* The Switch Knob */
+.pro-segment-item::after {
+    content: '';
+    position: absolute;
+    right: 30px; /* Base position */
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    transition: all 0.3s var(--ease-bounce);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.pro-segment-item input[type="checkbox"]:checked ~ .pro-segment-label {
+    color: var(--accent) !important;
+}
+/* Active Toggle State */
+.pro-segment-item:has(input[type="checkbox"]:checked)::before {
+    background: var(--accent) !important;
+}
+.pro-segment-item:has(input[type="checkbox"]:checked)::after {
+    transform: translateX(20px); /* Move knob */
+}
+
+.pro-segment-label {
+    padding-left: 16px !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+    font-size: 0.95rem !important;
+    transition: color 0.3s !important;
+    z-index: 1 !important;
+}
+
+/* ==========================================================================
+   9. RECIPE PREVIEW (The Physical Paper)
+   ========================================================================== */
+.a4-page {
+    background: #ffffff !important;
+    color: #111827 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 20mm !important;
+    margin: 0 auto !important;
+    border-radius: 8px !important; /* Small radius on screen */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1) !important;
+    position: relative !important;
+    font-family: 'Inter', Arial, sans-serif !important;
+}
+
+.recipe-preview-container {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+/* Print Specific Rules */
+@media print {
+    @page {
+        margin: 0;
+        size: A4;
+    }
+    body {
+        background: none !important;
+        padding: 0 !important;
+    }
+    .sidebar, #scheduling-sidebar, #app-interface > :not(.preview-pane), #login-screen {
+        display: none !important;
+    }
+    .preview-pane {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+    }
+    .a4-page, .a4-page-pro {
+        margin: 0 !important;
+        padding: 10mm 15mm !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+    }
+    .page-inactive-pro, .a4-page-pro.hidden, .a4-page.hidden {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        z-index: 1 !important;
+    }
+    #btn-print-recipe, .floating-actions, .lme-generate-btn {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   10. MODALS & OVERLAYS
+   ========================================================================== */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999 !important;
+}
+
+.modal-content, .settings-remastered {
+    background: var(--bento-bg) !important;
+    border: var(--bento-border) !important;
+    border-radius: var(--bento-radius) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8) !important;
+    padding: 32px !important;
+    max-width: 90vw !important;
+}
+
+.modal-title, h2, h3 {
+    font-family: var(--font-display) !important;
+    margin-bottom: 20px !important;
+}
+
+/* Scrollbars Bento Style */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   11. POSOLOGY GRID
+   ========================================================================== */
+.pro-grid {
+    display: flex !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+}
+.pro-col {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.pro-label {
+    font-size: 0.85rem !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+}
+
+/* Fix flex direction for med search row */
+.pro-search-row {
+    display: flex !important;
+    gap: 10px !important;
+    align-items: center !important;
+    margin-bottom: 20px !important;
+}
+.pro-icon-btn {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 16px !important;
+    background: rgba(0,0,0,0.4) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.5rem !important;
+    transition: all 0.3s var(--ease-bounce) !important;
+}
+.pro-icon-btn:hover {
+    background: rgba(255,255,255,0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ==========================================================================
+   4. EPIC APPLE-LEVEL STAGGERED REVEAL ANIMATIONS
+   ========================================================================== */
+
+/* Remove a animação original injetada pelo script.js aumentando a especificidade */
+#app-interface.app-fade-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+}
+
+/* Define os estados iniciais invisíveis para não piscar antes da animação começar */
+#app-interface .sidebar,
+#app-interface .preview-pane,
+#app-interface #scheduling-sidebar {
+    opacity: 0;
+    will-change: transform, opacity, filter;
+}
+
+/* 1º Elemento: Preview central surge do fundo como o protagonista */
+#app-interface.app-fade-in .preview-pane {
+    animation: bentoRevealEpic 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation-delay: 0.1s !important;
+    transform: translateY(40px) scale(0.96);
+    filter: blur(10px);
+}
+
+/* 2º Elemento: Painel esquerdo desliza revelando os controles suavemente */
+#app-interface.app-fade-in .sidebar {
+    animation: bentoRevealEpic 1s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation-delay: 0.25s !important;
+    transform: translateX(-50px) scale(0.98);
+    filter: blur(10px);
+}
+
+/* 3º Elemento: Painel de agenda (direito) desliza no último compasso */
+#app-interface.app-fade-in #scheduling-sidebar {
+    animation: bentoRevealEpic 1s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+    animation-delay: 0.4s !important;
+    transform: translateX(50px) scale(0.98);
+    filter: blur(10px);
+}
+
+/* Keyframes de qualidade premium da Apple (suavidade impecável) */
+@keyframes bentoRevealEpic {
+    0% {
+        opacity: 0;
+    }
+    40% {
+        opacity: 0.8;
+        filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+        filter: blur(0px);
+    }
+}

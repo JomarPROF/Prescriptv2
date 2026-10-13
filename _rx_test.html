@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>rx test</title></head>
+<body>
+<pre id="out">PENDING</pre>
+<iframe id="f" src="/index.html" style="width:1600px;height:1000px"></iframe>
+<script>
+const out = document.getElementById('out');
+const f = document.getElementById('f');
+function diag(w, d) {
+    const pages = Array.from(d.querySelectorAll('.a4-page[data-rx-scale]'));
+    const res = pages.map(p => {
+        const q = p.querySelector('.quadrante');
+        const cm = q && q.querySelector('.content-mini');
+        const cs = cm ? w.getComputedStyle(cm) : null;
+        const qs = q ? w.getComputedStyle(q) : null;
+        return { scale: p.getAttribute('data-rx-scale'), pageH: p.offsetHeight, qH: q && q.offsetHeight, qDisp: qs && qs.display, qHeightCss: qs && qs.height,
+                 cmScroll: cm && cm.scrollHeight, cmClient: cm && cm.clientHeight, cmFlex: cs && cs.flex, cmHeight: cs && cs.height, cmOverflow: cs && cs.overflow,
+                 children: q ? Array.from(q.children).map(c => c.className + ':' + c.offsetHeight) : [] };
+    });
+    const sbDiag = pages.slice(0,1).map(p => {
+        const q = p.querySelector('.quadrante');
+        const html = q.outerHTML.replace(/--rx-s:\s*[\d.]+/g, '--rx-s:1');
+        const sb = d.createElement('div');
+        sb.style.cssText = 'position:fixed;left:-30000px;top:0;width:105mm;height:148.5mm;visibility:hidden;overflow:hidden;pointer-events:none;z-index:-1;background:#fff;color:#000;display:block;';
+        sb.innerHTML = html;
+        d.body.appendChild(sb);
+        const qq = sb.querySelector('.quadrante'); const cm = sb.querySelector('.content-mini');
+        const r = { sbH: sb.offsetHeight, sbStyle: sb.getAttribute('style'), sbComputedH: w.getComputedStyle(sb).height, sbDisplay: w.getComputedStyle(sb).display, qH: qq.offsetHeight, qPad: w.getComputedStyle(qq).padding,
+            cmScroll: cm.scrollHeight, cmClient: cm.clientHeight, children: Array.from(qq.children).map(c => c.className + ':' + c.offsetHeight) };
+        sb.remove();
+        return r;
+    });
+    return { res, sbDiag };
+}
+setTimeout(() => {
+    try {
+        const w = f.contentWindow, d = f.contentDocument;
+        w.localStorage.setItem('cerebrum_meds_limit', '5');
+        w.App.items = [
+            {med:'ACICLOVIR 200 MG', poso:'Uso: Tomar por via oral 01 comprimido pela tarde e 01 comprimido à noite.', usage:'Uso contínuo', data:{m:0,t:1,n:1}},
+            {med:'AMOXICILINA 500 MG', poso:'Uso: Tomar por via oral 02 comprimidos pela manhã e 01 comprimido pela tarde.', usage:'Uso contínuo', data:{m:2,t:1,n:0}}
+        ];
+        w.App.render();
+        setTimeout(() => {
+            const r1 = diag(w, d);
+            w.App.items = [
+                {med:'ACICLOVIR 200 MG', poso:'Uso: Tomar por via oral 01 comprimido pela tarde e 01 comprimido à noite, durante 7 dias, mesmo que os sintomas melhorem.', usage:'Uso contínuo', data:{m:0,t:1,n:1}},
+                {med:'AMOXICILINA 500 MG', poso:'Uso: Tomar por via oral 02 comprimidos pela manhã e 01 comprimido pela tarde, após as refeições, com bastante água, por 10 dias.', usage:'Uso contínuo', data:{m:2,t:1,n:0}},
+                {med:'AMOXICILINA 500 MG', poso:'Uso: Tomar por via oral 01 comprimido pela manhã e 01 comprimido pela tarde. Não interromper o tratamento.', usage:'Uso contínuo', data:{m:1,t:1,n:0}},
+                {med:'HALOPERIDOL DECANOATO 50MG/ML', poso:'Uso: Administrar por via intramuscular 01 ampola a cada 30 dias, na região glútea, alternando os lados.', usage:'Uso contínuo', data:{m:1,t:30,type:'INJECT'}},
+                {med:'AMITRIPTILINA 25MG', poso:'Uso: Tomar por via oral 02 comprimidos à noite, 30 minutos antes de deitar. Evitar bebidas alcoólicas. Pode causar sonolência.', usage:'Uso contínuo', data:{m:0,t:0,n:2}}
+            ];
+            w.App.render();
+            setTimeout(() => {
+                const r2 = diag(w, d);
+                out.textContent = 'DONE ' + JSON.stringify({two: r1, five: r2}, null, 1);
+            }, 1500);
+        }, 1500);
+    } catch (e) { out.textContent = 'ERR ' + e.stack; }
+}, 26000);
+</script>
+</body></html>
